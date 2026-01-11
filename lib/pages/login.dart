@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,7 +41,17 @@ class _LoginPageState extends State<LoginPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      // ini navigasi untuk ke API
+
+      if (isLogin) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DashboardPage(),
+            ),
+          );
+        });
+      }
     }
   }
 
