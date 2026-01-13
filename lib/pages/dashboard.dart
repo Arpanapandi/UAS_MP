@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+// Catatan: Saat digabung ke project utama, 
+// ganti placeholder di bawah dengan import file asli milik teman kamu.
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -10,11 +14,11 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
 
+  // Daftar halaman: HomePage milik kamu, sisanya placeholder
   static const List<Widget> _widgetOptions = <Widget>[
-    HomeContent(),
-    Center(child: Text('Barang Page')),
-    Center(child: Text('Pinjam Page')),
-    Center(child: Text('Akun Page')),
+    HomePage(),
+    PlaceholderPage(title: 'Data Barang', icon: Icons.inventory_2_rounded),
+    PlaceholderPage(title: 'Peminjaman', icon: Icons.assignment_rounded),
   ];
 
   void _onItemTapped(int index) {
@@ -26,220 +30,219 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       body: _widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: BottomNavigationBar(
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard_rounded),
+                label: 'Beranda',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.inventory_2_rounded),
+                label: 'Barang',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment_rounded),
+                label: 'Pinjam',
+              ),
+            ],
+            currentIndex: _selectedIndex,
+            selectedItemColor: const Color(0xFF3B82F6),
+            unselectedItemColor: Colors.grey.shade400,
+            showUnselectedLabels: true,
+            selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12),
+            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 12),
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            onTap: _onItemTapped,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory),
-            label: 'Barang',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            label: 'Pinjam',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: 'Akun',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blueAccent,
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        ),
       ),
     );
   }
 }
 
-class HomeContent extends StatelessWidget {
-  const HomeContent({super.key});
-
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) {
-      return 'Selamat Pagi';
-    } else if (hour >= 12 && hour < 15) {
-      return 'Selamat Siang';
-    } else if (hour >= 15 && hour < 18) {
-      return 'Selamat Sore';
-    } else {
-      return 'Selamat Malam';
-    }
-  }
-
-  String _getCurrentDate() {
-    final now = DateTime.now();
-    final days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-    final months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-
-    return '${days[now.weekday - 1]}, ${now.day} ${months[now.month - 1]} ${now.year}';
-  }
+// --- BAGIAN MILIK KAMU (HOME PAGE) ---
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade400, Colors.blue.shade800],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.withOpacity(0.3),
-                  spreadRadius: 2,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+          _buildHeader(context),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Text(
+                  'Statistik Hari Ini',
+                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
+                ),
+                const SizedBox(height: 16),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.5,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${_getGreeting()}, John Doe!',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _getCurrentDate(),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white.withOpacity(0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.dashboard,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
+                    _buildStatCard('Total Barang', '120', Icons.inventory, Colors.blue),
+                    _buildStatCard('Dipinjam', '15', Icons.outbound, Colors.orange),
+                    _buildStatCard('Tersedia', '105', Icons.check_circle, Colors.green),
+                    _buildStatCard('Terlambat', '3', Icons.warning_rounded, Colors.red),
                   ],
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatCard('TOTAL BARANG', '150', Colors.white),
-                    _buildStatCard('DIPINJAM', '12', Colors.white),
-                    _buildStatCard('TERSEDIA', '38', Colors.white),
-                    _buildStatCard('TELAT', '38', Colors.white),
-                  ],
+                const SizedBox(height: 24),
+                Text(
+                  'Aksi Cepat',
+                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B)),
                 ),
+                const SizedBox(height: 16),
+                _buildQuickAction(context, 'Cari Barang', 'Temukan inventaris dengan mudah', Icons.search_rounded, Colors.blue),
+                const SizedBox(height: 12),
+                _buildQuickAction(context, 'Scan QR Code', 'Scan untuk melihat detail barang', Icons.qr_code_scanner_rounded, Colors.purple),
+                const SizedBox(height: 30),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          const Text(
-            'Menu Utama',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildMenuCard('Data Barang', Icons.inventory, Colors.blue, () {
-                // Navigate to data barang page
-              }),
-              _buildMenuCard('Peminjaman Barang', Icons.assignment, Colors.green, () {
-                // Navigate to peminjaman page
-              }),
-              _buildMenuCard('Pengembalian', Icons.undo, Colors.orange, () {
-                // Navigate to pengembalian page
-              }),
-              _buildMenuCard('Laporan', Icons.report, Colors.red, () {
-                // Navigate to laporan page
-              }),
+              Text('Halo, Admin!', style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text('Selamat datang di SIMBA', style: GoogleFonts.poppins(fontSize: 14, color: Colors.white.withOpacity(0.8))),
             ],
           ),
+          const CircleAvatar(
+            backgroundColor: Colors.white24,
+            child: Icon(Icons.person, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white, borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 12),
+          Text(value, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+          Text(title, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(BuildContext context, String title, String subtitle, IconData icon, Color color) {
+    return Container(
+      width: double.infinity, padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white, borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: color),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: Colors.grey),
         ],
       ),
     );
   }
 }
 
-Widget _buildStatCard(String title, String value, Color color) {
-  return Container(
-    width: 80,
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      children: [
-        Text(
-          title,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
-        ),
-      ],
-    ),
-  );
-}
+// --- WIDGET PLACEHOLDER (Hanya untuk testing biar tidak error) ---
+class PlaceholderPage extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  const PlaceholderPage({super.key, required this.title, required this.icon});
 
-Widget _buildMenuCard(String title, IconData icon, Color color, VoidCallback onTap) {
-  return Card(
-    elevation: 4,
-    child: InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF3B82F6),
+        elevation: 0,
+      ),
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: color),
+            Icon(icon, size: 80, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(
+              'Halaman $title Bakal Muncul Di Sini',
+              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
+            ),
             const SizedBox(height: 8),
             Text(
-              title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+              '(Ini adalah placeholder sementara)',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
             ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
