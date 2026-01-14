@@ -1,33 +1,29 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../provider/item_provider.dart';
+import '../model/Model-data_barang.dart';
 
 class DataBarang extends StatefulWidget {
-  const DataBarang({super.key});
+  DataBarang({super.key});
 
   @override
   State<DataBarang> createState() => _DataBarangState();
 }
 
 class _DataBarangState extends State<DataBarang> {
-  final List<Map<String, dynamic>> items = [
-    {"name": "Novel Hujan", "available": 12, "image": "https://via.placeholder.com/150"},
-    {"name": "Al-Qur'an", "available": 5, "image": "https://via.placeholder.com/150"},
-    {"name": "Buku Tulis", "available": 7, "image": "https://via.placeholder.com/150"},
-    {"name": "Mini Whiteboard", "available": 4, "image": "https://via.placeholder.com/150"},
-    {"name": "Buku Gambar", "available": 2, "image": "https://via.placeholder.com/150"},
-    {"name": "Pensil", "available": 3, "image": "https://via.placeholder.com/150"},
-  ];
+  List<int> jumlahPinjam = [];
+  final Map<Item, int> keranjang = {};
 
-  late List<int> jumlahPinjam;
-
-  @override
-  void initState() {
-    super.initState();
-    jumlahPinjam = List.generate(items.length, (_) => 0);
+  void _syncJumlahPinjam(int length) {
+    if (jumlahPinjam.length != length) {
+      jumlahPinjam = List.generate(length, (_) => 0);
+    }
   }
 
-  void tambah(int i) {
-    if (jumlahPinjam[i] < items[i]["available"]) {
+  void tambah(int i, int stok) {
+    if (jumlahPinjam[i] < stok) {
       setState(() => jumlahPinjam[i]++);
     }
   }
@@ -38,13 +34,88 @@ class _DataBarangState extends State<DataBarang> {
     }
   }
 
+  /// ================= KERANJANG =================
+  void _showKeranjang() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Color(0xFF030712),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Keranjang Pinjaman', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 16),
+            keranjang.isEmpty
+                ? Text(
+                    'Belum ada pinjaman',
+                    style: TextStyle(color: Colors.white54),
+                  )
+                : Column(
+                    children: keranjang.entries.map((e) {
+                      return ListTile(
+                        title: Text(e.key.nama, style: TextStyle(color: Colors.white)),
+                        trailing: Text('x${e.value}', style: TextStyle(color: Colors.white70)),
+                      );
+                    }).toList(),
+                  ),
+            Text("Notes : Hubungi Petugas Perpustakaan jika ingin mengembalikan barang", style: TextStyle(color: Colors.white),)
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// ================= KONFIRMASI =================
+  Future<void> _konfirmasiPinjam(
+    ItemProvider provider,
+    Item item,
+    int jumlah,
+    int index,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Konfirmasi Pinjam'),
+        content: Text(
+          'Apakah anda yakin akan meminjam barang ini?\n\n'
+          'Pengembalian atau pembatalan harus dikonfirmasi ke petugas perpustakaan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Ya'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true) {
+      for (int i = 0; i < jumlah; i++) {
+        provider.kurangiStok(item.id);
+      }
+
+      setState(() {
+        keranjang[item] = (keranjang[item] ?? 0) + jumlah;
+        jumlahPinjam[index] = 0;
+      });
+    }
+  }
+
   Widget glassCard({required Widget child}) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.03),
             borderRadius: BorderRadius.circular(16),
@@ -58,14 +129,18 @@ class _DataBarangState extends State<DataBarang> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ItemProvider>();
+    final items = provider.items;
+
+    _syncJumlahPinjam(items.length);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF030712),
+      backgroundColor: Color(0xFF030712),
       body: Column(
         children: [
-
           /// APPBAR
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF1E3A8A), Color(0xFF312E81)],
@@ -73,47 +148,25 @@ class _DataBarangState extends State<DataBarang> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.inventory_2, color: Colors.white),
-                const SizedBox(width: 10),
-                const Text(
-                  "Pinjam Barang Perpustakaan",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    padding: const EdgeInsets.all(10),
-                    backgroundColor: Colors.white.withOpacity(0.1),
-                  ),
-                  child: const Icon(Icons.handshake, color: Color(0xFF60A5FA)),
+                Icon(Icons.inventory_2, color: Colors.white),
+                SizedBox(width: 10),
+                Text('Pinjam Barang Perpustakaan', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                Spacer(),
+
+                IconButton(
+                  icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                  onPressed: _showKeranjang,
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
-          /// TITLE
-          const Text(
-            "Daftar Barang",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
-            ),
-          ),
+          Text('Daftar Barang', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
-          /// GRID
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(16),
@@ -123,17 +176,18 @@ class _DataBarangState extends State<DataBarang> {
                 mainAxisSpacing: 12,
               ),
               itemCount: items.length,
-              itemBuilder: (context, i) {
+              itemBuilder: (_, i) {
                 final item = items[i];
+
                 return glassCard(
                   child: Column(
                     children: [
                       Expanded(
-                        child: Image.network(item["image"]),
+                        child: Image.network(item.image, fit: BoxFit.cover),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
-                        item["name"],
+                        item.nama,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -142,49 +196,40 @@ class _DataBarangState extends State<DataBarang> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Stok: ${item["available"]}",
-                        style: const TextStyle(
-                          color: Color(0xFF34D399),
-                        ),
-                      ),
-
-                      /// COUNTER
+                      SizedBox(height: 4),
+                      Text('Stok: ${item.stok}', style: const TextStyle(color: Color(0xFF34D399))),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+
                           IconButton(
                             icon: const Icon(Icons.remove, color: Colors.white),
                             onPressed: () => kurang(i),
                           ),
+
                           Text(
                             jumlahPinjam[i].toString(),
                             style: const TextStyle(color: Colors.white),
                           ),
+
                           IconButton(
                             icon: const Icon(Icons.add, color: Colors.white),
-                            onPressed: () => tambah(i),
+                            onPressed: () => tambah(i, item.stok),
                           ),
+
                         ],
                       ),
-
-                      /// BUTTON
-ElevatedButton(
-  onPressed: jumlahPinjam[i] > 0 ? () {} : null,
-  style: ElevatedButton.styleFrom(
-    backgroundColor: jumlahPinjam[i] > 0
-        ? const Color(0xFF60A5FA) // aktif
-        : Colors.white.withOpacity(0.08), // nonaktif tapi keliatan
-    disabledBackgroundColor: Colors.white.withOpacity(0.08),
-    foregroundColor: jumlahPinjam[i] > 0
-        ? Colors.white
-        : Colors.white54,
-    disabledForegroundColor: Colors.white54,
-  ),
-  child: const Text("Pinjam"),
-),
-
+                      ElevatedButton(
+                        onPressed: jumlahPinjam[i] > 0
+                            ? () => _konfirmasiPinjam(
+                                  provider,
+                                  item,
+                                  jumlahPinjam[i],
+                                  i,
+                                )
+                            : null,
+                        child: Text('Pinjam'),
+                      ),
                     ],
                   ),
                 );

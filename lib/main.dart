@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'pages/data_barang.dart';
+import 'pages/dashboard.dart';
+import 'provider/item_provider.dart';
 
 void main() {
   runApp(
-    MyApp()
+    ChangeNotifierProvider(
+      create: (_) => ItemProvider(),
+      child: MyApp(),
+    ),
   );
 }
 
@@ -15,7 +22,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pinjam Barang Perpustakaan',
       theme: ThemeData(primarySwatch: Colors.blueGrey),
-      home: DataBarang(),
+      home: Dashboard(),
     );
   }
 }
