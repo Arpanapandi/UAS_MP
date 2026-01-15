@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'login.dart';
 
 // Model Barang sederhana (Local)
 class Barang {
@@ -172,7 +173,7 @@ class HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            _buildHeader(context),
             const SizedBox(height: 32),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -226,25 +227,178 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Welcome, Commander',
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-            ),
-            Text(
-              'SIMBA OS Terminal 1.0',
-              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14),
-            ),
-          ],
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      // height: 240, // Hapus fixed height biar gak overflow (garis kuning hitam)
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF020617), Color(0xFF2563EB)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
         ),
-        _buildGlassIcon(Icons.terminal_rounded),
-      ],
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withOpacity(0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -50,
+            top: -50,
+            bottom: -50,
+            child: Container(
+              width: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [Colors.white.withOpacity(0.1), Colors.transparent],
+                  center: Alignment.center,
+                  radius: 0.7,
+                ),
+              ),
+            ),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.all(24.0), // Padding dikurangi biar lebih compact
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Good Evening, Commander',
+                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    // Status Badge dipindah ke kanan atas
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.circle, color: Color(0xFF34D399), size: 8),
+                          SizedBox(width: 6),
+                          Text(
+                            'ONLINE',
+                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'John Doe',
+                  style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Fokus pada solusi, bukan masalah', 
+                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13),
+                ),
+                
+                const SizedBox(height: 24), // Jarak ke bawah dikurangi
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text(
+                      '10:30 AM',
+                      style: TextStyle(
+                        color: Colors.white, 
+                        fontSize: 20, 
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => Dialog(
+                            backgroundColor: Colors.transparent,
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F172A).withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.2), blurRadius: 20)],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const CircleAvatar(
+                                    radius: 40,
+                                    backgroundColor: Color(0xFF2563EB),
+                                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text('John Doe', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                                  const Text('commander.john@simba.id', style: TextStyle(color: Colors.white54, fontSize: 14)),
+                                  const SizedBox(height: 24),
+                                  const Divider(color: Colors.white10),
+                                  ListTile(
+                                    leading: const Icon(Icons.badge, color: Colors.blueAccent),
+                                    title: const Text('Role', style: TextStyle(color: Colors.white)),
+                                    subtitle: const Text('Super Administrator', style: TextStyle(color: Colors.white54)),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.redAccent.withOpacity(0.2),
+                                        foregroundColor: Colors.redAccent,
+                                        padding: const EdgeInsets.symmetric(vertical: 16),
+                                      ),
+                                      icon: const Icon(Icons.logout),
+                                      label: const Text('LOGOUT SYSTEM'),
+                                      onPressed: () {
+                                        Navigator.pop(ctx); // Tutup dialog
+                                        Navigator.pushReplacement(
+                                          context, 
+                                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                        ),
+                        child: const Icon(Icons.person_rounded, color: Color(0xFF2563EB), size: 28),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
