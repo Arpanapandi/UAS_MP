@@ -5,6 +5,9 @@ use App\Http\Controllers\BarangController;
 use App\Http\Controllers\PeminjamanController;
 use Illuminate\Support\Facades\Route;
 
+// API Documentation (OpenAPI JSON)
+Route::get('/api-docs.json', [\App\Http\Controllers\ApiDocsController::class, 'index']);
+
 // Public routes (tanpa authentication)
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);

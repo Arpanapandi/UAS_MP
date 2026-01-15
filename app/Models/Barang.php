@@ -9,11 +9,24 @@ class Barang extends Model
 {
     use HasFactory;
 
+    protected $table = 'barang';
+
     protected $fillable = [
         'nama_barang',
         'stok',
         'keterangan',
+        'gambar',
     ];
+
+    protected $appends = ['gambar_url'];
+
+    public function getGambarUrlAttribute()
+    {
+        if ($this->gambar) {
+            return url('images/barang/' . $this->gambar);
+        }
+        return null;
+    }
 
     /**
      * Get the peminjaman for the barang.

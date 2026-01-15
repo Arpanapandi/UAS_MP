@@ -15,11 +15,15 @@ class EnsureUserIsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()->role !== 'admin') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Akses ditolak. Hanya admin yang dapat mengakses endpoint ini.',
-            ], 403);
+        if (!$request->user() || $request->user()->role !== 'admin') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Akses ditolak. Hanya admin yang dapat mengakses endpoint ini.',
+                ], 403);
+            }
+            
+            abort(403, 'Akses ditolak. Hanya admin yang dapat mengakses halaman ini.');
         }
 
         return $next($request);

@@ -6,10 +6,45 @@ use App\Models\Peminjaman;
 use App\Models\Barang;
 use Illuminate\Http\Request;
 
+/**
+ * @OA\Tag(
+ *     name="Peminjaman",
+ *     description="API untuk mengelola data peminjaman. Admin bisa melihat semua peminjaman, peminjam hanya bisa melihat peminjaman miliknya sendiri."
+ * )
+ */
 class PeminjamanController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/peminjaman",
+     *     tags={"Peminjaman"},
+     *     summary="Get all peminjaman",
+     *     description="Mendapatkan semua data peminjaman. Admin bisa melihat semua peminjaman, peminjam hanya bisa melihat peminjaman miliknya sendiri. user_id otomatis diambil dari token login.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Data peminjaman berhasil diambil",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Data peminjaman berhasil diambil."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="integer", example=2),
+     *                     @OA\Property(property="barang_id", type="integer", example=1),
+     *                     @OA\Property(property="tanggal_pinjam", type="string", format="date", example="2024-01-15"),
+     *                     @OA\Property(property="status", type="string", example="dipinjam", enum={"dipinjam", "dikembalikan"}),
+     *                     @OA\Property(property="user", type="object", description="Data user peminjam"),
+     *                     @OA\Property(property="barang", type="object", description="Data barang yang dipinjam")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=401, description="Unauthorized - Token tidak valid")
+     * )
      */
     public function index(Request $request)
     {
@@ -32,7 +67,34 @@ class PeminjamanController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/peminjaman",
+     *     tags={"Peminjaman"},
+     *     summary="Create peminjaman baru",
+     *     description="Menambahkan peminjaman baru. user_id otomatis diambil dari token login. Stok barang otomatis berkurang jika status = 'dipinjam'.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"barang_id","tanggal_pinjam","status"},
+     *             @OA\Property(property="barang_id", type="integer", example=1, description="ID barang yang dipinjam"),
+     *             @OA\Property(property="tanggal_pinjam", type="string", format="date", example="2024-01-15", description="Tanggal pinjam (format: YYYY-MM-DD)"),
+     *             @OA\Property(property="status", type="string", example="dipinjam", enum={"dipinjam", "dikembalikan"}, description="Status peminjaman")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Peminjaman berhasil ditambahkan",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Peminjaman berhasil ditambahkan."),
+     *             @OA\Property(property="data", type="object", description="Data peminjaman yang baru dibuat")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Stok barang tidak tersedia"),
+     *     @OA\Response(response=404, description="Barang tidak ditemukan"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
      */
     public function store(Request $request)
     {
@@ -80,7 +142,31 @@ class PeminjamanController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * @OA\Get(
+     *     path="/peminjaman/{id}",
+     *     tags={"Peminjaman"},
+     *     summary="Get peminjaman by ID",
+     *     description="Mendapatkan data peminjaman berdasarkan ID. Admin bisa melihat semua, peminjam hanya bisa melihat peminjaman miliknya sendiri.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID peminjaman",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Data peminjaman berhasil diambil",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Data peminjaman berhasil diambil."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Akses ditolak - Peminjam hanya bisa melihat peminjaman miliknya"),
+     *     @OA\Response(response=404, description="Peminjaman tidak ditemukan")
+     * )
      */
     public function show(Request $request, $id)
     {
@@ -110,7 +196,40 @@ class PeminjamanController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Put(
+     *     path="/peminjaman/{id}",
+     *     tags={"Peminjaman"},
+     *     summary="Update peminjaman",
+     *     description="Update data peminjaman. Admin bisa update semua, peminjam hanya bisa update peminjaman miliknya. Jika status berubah dari 'dipinjam' ke 'dikembalikan', stok barang otomatis kembali.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID peminjaman",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="barang_id", type="integer", example=1, description="ID barang (opsional)"),
+     *             @OA\Property(property="tanggal_pinjam", type="string", format="date", example="2024-01-15", description="Tanggal pinjam (opsional)"),
+     *             @OA\Property(property="status", type="string", example="dikembalikan", enum={"dipinjam", "dikembalikan"}, description="Status peminjaman (opsional)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Peminjaman berhasil diupdate",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Peminjaman berhasil diupdate."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Stok barang tidak tersedia"),
+     *     @OA\Response(response=403, description="Akses ditolak"),
+     *     @OA\Response(response=404, description="Peminjaman tidak ditemukan")
+     * )
      */
     public function update(Request $request, $id)
     {
@@ -176,7 +295,30 @@ class PeminjamanController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Delete(
+     *     path="/peminjaman/{id}",
+     *     tags={"Peminjaman"},
+     *     summary="Delete peminjaman",
+     *     description="Hapus data peminjaman. Admin bisa hapus semua, peminjam hanya bisa hapus peminjaman miliknya. Jika status = 'dipinjam', stok barang otomatis dikembalikan.",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="ID peminjaman",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Peminjaman berhasil dihapus",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Peminjaman berhasil dihapus.")
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Akses ditolak"),
+     *     @OA\Response(response=404, description="Peminjaman tidak ditemukan")
+     * )
      */
     public function destroy(Request $request, $id)
     {
