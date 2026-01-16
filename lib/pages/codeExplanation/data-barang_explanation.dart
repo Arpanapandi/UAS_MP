@@ -26,13 +26,11 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
 
       /* 
       selanjutnya, kita ingin agar setiap barang selalu punya “slot” jumlah pinjam sendiri, mulai dari nol.
-      - maka kita buat list baru dari 0, dengan jumlah elemen = length
-      - karena disaat list.generate jalan, dart akan kasih satu nilai, tapi nilai tersebut ga dipake, karena kita mau isi list = 0. 
-        parameternya harus tetap ada, tapi ga dipakai, jadi cuma di namain _. masalahnya, List.generate WAJIB nerima sebuah fungsi dengan 1 parameter. 
-        jadi ya bukan karena dipakai tapi karena regulasi aja. mungkin bisa kia ganti namanya jadi VariabelNurutAja
+      - dengan List.generate kita bisa bikin list baru dengan panjang length, dan isi awal semua elemen = 0, 
+        yang kita simpan di varibel "_". sebenarnya variable nya ga penting, yg penting cuma 0 nya aja
       */
       // jumlahPinjam = List.generate(length, (_) => 0);
-      jumlahPinjam = List.generate(length, (VariabelNurutAja) => 0);
+      jumlahPinjam = List.generate(length, (_) => 0);
     }
   }
 
@@ -97,6 +95,7 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
