@@ -1,0 +1,139 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../provider/peminjaman_provider.dart';
+import '../provider/item_provider.dart';
+
+class HistoryPage extends StatelessWidget {
+  const HistoryPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final peminjaman = context.watch<PeminjamanProvider>().listPeminjaman;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF030712),
+      appBar: AppBar(
+        title: const Text('Data Peminjaman'),
+        backgroundColor: const Color(0xFF1E3A8A),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: peminjaman.isEmpty
+            ? const Center(
+                child: Text(
+                  'Belum ada data peminjaman',
+                  style: TextStyle(color: Colors.white54),
+                ),
+              )
+            : ListView.builder(
+                itemCount: peminjaman.length,
+                itemBuilder: (context, index) {
+                  final data = peminjaman[index];
+
+                  return Card(
+                    color: Colors.white.withOpacity(0.05),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.blueGrey.shade800,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.inventory_2,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      data.namaBarang,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Jumlah: ${data.jumlah}',
+                                      style: const TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${data.tanggal.day}/${data.tanggal.month}/${data.tanggal.year}',
+                                      style: const TextStyle(
+                                        color: Colors.white38,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      data.sudahDikembalikan
+                                          ? "Dikembalikan"
+                                          : "Dipinjam",
+                                      style: TextStyle(
+                                        color: data.sudahDikembalikan
+                                            ? Colors.greenAccent
+                                            : Colors.yellowAccent,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (!data.sudahDikembalikan) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  final itemProvider = context.read<ItemProvider>();
+                                  final peminjamanProvider = context.read<PeminjamanProvider>();
+
+                                  // 1. Tambah stok barang
+                                  itemProvider.tambahStok(
+                                    data.itemId,
+                                    data.jumlah,
+                                  );
+
+                                  // 2. Kosongkan keranjang
+                                  itemProvider.resetKeranjang();
+
+                                  // 3. Hapus data peminjaman
+                                  peminjamanProvider.konfirmasiPengembalian(data.id);
+                                },
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                                child: const Text('Konfirmasi Pengembalian'),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
+    );
+  }
+}

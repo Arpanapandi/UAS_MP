@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
+
 import '../pages/data_barang.dart';
-
-
 import '../provider/item_provider.dart';
-import '../model/Model-data_barang.dart';
+import '../model/Model_data-barang.dart';
+
+import '../pages/data_peminjaman.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -17,23 +18,16 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final items = context.watch<ItemProvider>().items;
+    final items = context.watch<ItemProvider>().items; // 🔹 pakai watch supaya rebuild otomatis
 
     final pages = [
       HomePage(items: items),
       const ManageBarangPage(),
-      const PlaceholderPage(title: 'Activity', icon: Icons.insights_rounded),
-      const SizedBox(), // index 3 dummy
+      DataBarang(),
+      const HistoryPage(),
     ];
-
 
     return Scaffold(
       backgroundColor: const Color(0xFF030712),
@@ -42,12 +36,18 @@ class _DashboardState extends State<Dashboard> {
           Positioned(
             top: -100,
             right: -100,
-            child: _buildGlowSpot(250, const Color(0xFF3B82F6).withOpacity(0.15)),
+            child: _buildGlowSpot(
+              250,
+              const Color(0xFF3B82F6).withOpacity(0.15),
+            ),
           ),
           Positioned(
             bottom: -50,
             left: -50,
-            child: _buildGlowSpot(300, const Color(0xFF8B5CF6).withOpacity(0.15)),
+            child: _buildGlowSpot(
+              300,
+              const Color(0xFF8B5CF6).withOpacity(0.15),
+            ),
           ),
           Column(
             children: [
@@ -72,7 +72,11 @@ class _DashboardState extends State<Dashboard> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(color: color, blurRadius: 150, spreadRadius: 50),
+          BoxShadow(
+            color: color,
+            blurRadius: 150,
+            spreadRadius: 50,
+          ),
         ],
       ),
     );
@@ -93,35 +97,36 @@ class _DashboardState extends State<Dashboard> {
               border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
             child: BottomNavigationBar(
-  items: const [
-    BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Home'),
-    BottomNavigationBarItem(icon: Icon(Icons.rocket_launch_rounded), label: 'Manage'),
-    BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: 'Stat'),
-    BottomNavigationBarItem(icon: Icon(Icons.inventory_2_rounded), label: 'Daftar Barang'),
-  ],
-  currentIndex: _selectedIndex,
-  selectedItemColor: const Color(0xFF60A5FA),
-  unselectedItemColor: Colors.white38,
-  backgroundColor: Colors.transparent,
-  elevation: 0,
-  type: BottomNavigationBarType.fixed,
-onTap: (index) {
-  // PINJAM
-  if (index == 3) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => DataBarang()),
-    );
-    return; // ⬅️ PENTING
-  }
-
-  setState(() {
-    _selectedIndex = index;
-  });
-},
-
-),
-
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.grid_view_rounded),
+                  label: 'Dashboard',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.rocket_launch_rounded),
+                  label: 'Manage',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.inventory_2_rounded),
+                  label: 'Daftar Barang',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.inventory_2_rounded),
+                  label: 'Data Peminjaman',
+                ),
+              ],
+              currentIndex: _selectedIndex,
+              selectedItemColor: const Color(0xFF60A5FA),
+              unselectedItemColor: Colors.white38,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              type: BottomNavigationBarType.fixed,
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            ),
           ),
         ),
       ),
@@ -130,14 +135,13 @@ onTap: (index) {
 }
 
 /* ================= HOME PAGE ================= */
-
 class HomePage extends StatelessWidget {
   final List<Item> items;
   const HomePage({super.key, required this.items});
 
   @override
   Widget build(BuildContext context) {
-    int totalStok = items.fold(0, (sum, i) => sum + i.stok);
+    final totalStok = items.fold(0, (sum, i) => sum + i.stok); // 🔹 otomatis update
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -168,8 +172,14 @@ class HomePage extends StatelessWidget {
   Widget _header() => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: const [
-          Text('Welcome, Commander',
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+          Text(
+            'Welcome, Commander',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           Icon(Icons.terminal_rounded, color: Colors.white),
         ],
       );
@@ -184,15 +194,25 @@ class HomePage extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-              child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(t, style: const TextStyle(color: Colors.white54, fontSize: 10)),
-              Text(v,
-                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-            ],
-          )),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  t,
+                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                ),
+                Text(
+                  v,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
           Icon(i, color: Colors.blueAccent),
         ],
       ),
@@ -201,7 +221,6 @@ class HomePage extends StatelessWidget {
 }
 
 /* ================= MANAGE PAGE ================= */
-
 class ManageBarangPage extends StatelessWidget {
   const ManageBarangPage({super.key});
 
@@ -214,46 +233,67 @@ class ManageBarangPage extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (_) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: namaC, decoration: const InputDecoration(labelText: 'Nama Barang')),
-          TextField(controller: stokC, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Stok')),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              final provider = context.read<ItemProvider>();
-              provider.tambahItem(
-                Item(
-                  id: item?.id ?? DateTime.now().toString(),
-                  nama: namaC.text,
-                  stok: int.tryParse(stokC.text) ?? 0,
-                  image: '',
-                ),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('SIMPAN'),
-          )
-        ]),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: namaC,
+              decoration: const InputDecoration(labelText: 'Nama Barang'),
+            ),
+            TextField(
+              controller: stokC,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Stok'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                final provider = context.read<ItemProvider>();
+                provider.tambahItem(
+                  Item(
+                    id: item?.id ?? DateTime.now().toString(),
+                    nama: namaC.text,
+                    stok: int.tryParse(stokC.text) ?? 0,
+                    image: '',
+                  ),
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('SIMPAN'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<ItemProvider>();
+    final provider = context.watch<ItemProvider>(); // 🔹 pakai watch supaya rebuild
     final items = provider.items;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: const Text('ASSET MANAGEMENT'), backgroundColor: Colors.transparent),
+      appBar: AppBar(
+        title: const Text('ASSET MANAGEMENT'),
+        backgroundColor: Colors.transparent,
+      ),
       body: ListView.builder(
         itemCount: items.length,
         itemBuilder: (_, i) {
           final item = items[i];
           return ListTile(
             title: Text(item.nama, style: const TextStyle(color: Colors.white)),
-            subtitle: Text('Stok: ${item.stok}', style: const TextStyle(color: Colors.white54)),
+            subtitle: Text(
+              'Stok: ${item.stok}', // 🔹 otomatis update
+              style: const TextStyle(color: Colors.white54),
+            ),
             trailing: IconButton(
               icon: const Icon(Icons.delete, color: Colors.redAccent),
               onPressed: () => provider.hapusItem(item.id),
@@ -265,24 +305,6 @@ class ManageBarangPage extends StatelessWidget {
         onPressed: () => _showForm(context),
         child: const Icon(Icons.add),
       ),
-    );
-  }
-}
-
-/* ================= PLACEHOLDER ================= */
-
-class PlaceholderPage extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  const PlaceholderPage({super.key, required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(icon, size: 80, color: Colors.blueGrey),
-        Text(title, style: const TextStyle(color: Colors.white)),
-      ]),
     );
   }
 }

@@ -1,11 +1,12 @@
-import 'package:aplikasi_project_uas/model/Model-data_barang.dart';
+import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
 import 'package:flutter/material.dart';
-
 
 class ItemProvider with ChangeNotifier {
   final List<Item> _items = [];
+  final Map<Item, int> _keranjang = {}; // <- tambahkan keranjang
 
   List<Item> get items => _items;
+  Map<Item, int> get keranjang => _keranjang; // getter keranjang
 
   void tambahItem(Item item) {
     _items.add(item);
@@ -33,4 +34,33 @@ class ItemProvider with ChangeNotifier {
 
     notifyListeners();
   }
+
+  // ================= KERANJANG =================
+  void tambahKeranjang(Item item, int jumlah) {
+    _keranjang[item] = (_keranjang[item] ?? 0) + jumlah;
+    notifyListeners();
+  }
+
+  void resetKeranjang() {
+    _keranjang.clear();
+    notifyListeners();
+  }
+
+void tambahStok(String itemId, int jumlah) {
+  final index = _items.indexWhere((i) => i.id == itemId);
+  if (index == -1) return;
+
+  final item = _items[index];
+
+  _items[index] = Item(
+    id: item.id,
+    nama: item.nama,
+    stok: item.stok + jumlah,
+    image: item.image,
+  );
+
+  notifyListeners();
+}
+
+
 }
