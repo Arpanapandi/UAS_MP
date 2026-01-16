@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3B82F6)),
         useMaterial3: true,
       ),
-      home: const Dashboard(),
+      home: Dashboard(),
     );
   }
 }

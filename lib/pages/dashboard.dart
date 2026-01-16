@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'login.dart';
+// import 'login.dart';
 
 // Model Barang sederhana (Local)
 class Barang {
@@ -13,7 +15,11 @@ class Barang {
 }
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+  final String? username;  // Nama user dari login (opsional)
+  final String? email;     // Email user dari login (opsional)
+  final String? password;  // Password (tidak ditampilkan, hanya untuk kompatibilitas)
+  
+  const Dashboard({super.key, this.username, this.email, this.password});
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -63,14 +69,19 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      HomePage(inventory: _inventory),
+      HomePage(
+        inventory: _inventory,
+        username: widget.username ?? 'John Doe',
+        email: widget.email ?? 'commander.john@simba.id',
+      ),
       ManageBarangPage(
         inventory: _inventory,
         onAdd: _addBarang,
         onEdit: _editBarang,
         onDelete: _deleteBarang,
       ),
-      const PlaceholderPage(title: 'Activity', icon: Icons.insights_rounded),
+      const PlaceholderPage(title: 'Peminjaman', icon: Icons.assignment_rounded),
+      const PlaceholderPage(title: 'Pengembalian', icon: Icons.assignment_return_rounded),
     ];
 
     return Scaffold(
@@ -140,8 +151,9 @@ class _DashboardState extends State<Dashboard> {
             child: BottomNavigationBar(
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Home'),
-                BottomNavigationBarItem(icon: Icon(Icons.rocket_launch_rounded), label: 'Manage'),
-                BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: 'Stat'),
+                BottomNavigationBarItem(icon: Icon(Icons.rocket_launch_rounded), label: 'Barang'),
+                BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: 'Pinjam'),
+                BottomNavigationBarItem(icon: Icon(Icons.assignment_return_rounded), label: 'Kembalikan'),
               ],
               currentIndex: _selectedIndex,
               selectedItemColor: const Color(0xFF60A5FA),
@@ -161,7 +173,15 @@ class _DashboardState extends State<Dashboard> {
 // --- HOME PAGE (GLASS DESIGN) ---
 class HomePage extends StatelessWidget {
   final List<Barang> inventory;
-  const HomePage({super.key, required this.inventory});
+  final String username;
+  final String email;
+  
+  const HomePage({
+    super.key, 
+    required this.inventory,
+    required this.username,
+    required this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -169,11 +189,11 @@ class HomePage extends StatelessWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: const EdgeInsets.only(top: 20, bottom: 20), // Hilangkan padding kiri-kanan
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(context),
+            _buildHeader(context, username, email),
             const SizedBox(height: 32),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -199,8 +219,8 @@ class HomePage extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 8, // Kurangi jarak antar kartu
+                  mainAxisSpacing: 8,
                   childAspectRatio: aspectRatio,
                   children: [
                     _glassCard('ASSETS', '${inventory.length}', Icons.category_rounded, const Color(0xFF60A5FA)),
@@ -212,14 +232,23 @@ class HomePage extends StatelessWidget {
               },
             ),
                 const SizedBox(height: 32),
-                const Text(
-                  'Recent Command Centre',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'Recent Command Centre',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                _buildGlassAction('System Integrity Check', 'All systems operational', Icons.verified_user_rounded, Colors.greenAccent),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: _buildGlassAction('System Integrity Check', 'All systems operational', Icons.verified_user_rounded, Colors.greenAccent),
+                ),
                 const SizedBox(height: 12),
-                _buildGlassAction('Inventory Syncing...', 'Fetching remote assets', Icons.sync_rounded, Colors.blueAccent),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: _buildGlassAction('Inventory Syncing...', 'Fetching remote assets', Icons.sync_rounded, Colors.blueAccent),
+                ),
                 const SizedBox(height: 100),
           ],
         ),
@@ -227,7 +256,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, String username, String email) {
     return Container(
       width: double.infinity,
       // height: 240, // Hapus fixed height biar gak overflow (garis kuning hitam)
@@ -299,30 +328,57 @@ class HomePage extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'John Doe',
-                  style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
-                ),
-                const SizedBox(height: 8),
                 Text(
-                  'Fokus pada solusi, bukan masalah', 
-                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13),
+                  username,
+                  style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
                 ),
                 
-                const SizedBox(height: 24), // Jarak ke bawah dikurangi
+                const SizedBox(height: 32), // Jarak ke bawah
                 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text(
-                      '10:30 AM',
-                      style: TextStyle(
-                        color: Colors.white, 
-                        fontSize: 20, 
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
+                    // Real-time Clock using StreamBuilder
+                    StreamBuilder(
+                      stream: Stream.periodic(const Duration(seconds: 1)),
+                      builder: (context, snapshot) {
+                        final now = DateTime.now();
+                        final hour = now.hour.toString().padLeft(2, '0');
+                        final minute = now.minute.toString().padLeft(2, '0');
+                        final second = now.second.toString().padLeft(2, '0');
+                        
+                        // Manual Date Formatting to avoid intl dependency
+                        final List<String> months = [
+                          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                        ];
+                        final dateString = '${now.day} ${months[now.month - 1]} ${now.year}';
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$hour:$minute',
+                              style: const TextStyle(
+                                color: Colors.white, 
+                                fontSize: 32, // Lebih Besar
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            Text(
+                              dateString,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8), 
+                                fontSize: 14, 
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     GestureDetector(
                       onTap: () {
@@ -347,8 +403,8 @@ class HomePage extends StatelessWidget {
                                     child: Icon(Icons.person, size: 40, color: Colors.white),
                                   ),
                                   const SizedBox(height: 16),
-                                  const Text('John Doe', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                                  const Text('commander.john@simba.id', style: TextStyle(color: Colors.white54, fontSize: 14)),
+                                  Text(username, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                                  Text(email, style: const TextStyle(color: Colors.white54, fontSize: 14)),
                                   const SizedBox(height: 24),
                                   const Divider(color: Colors.white10),
                                   ListTile(
@@ -405,51 +461,82 @@ class HomePage extends StatelessWidget {
   // Widget _buildGlassStatGrid dihapus karena sudah dipindah ke LayoutBuilder di atas agar lebih responsive
 
   Widget _glassCard(String t, String v, IconData i, Color c) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(color: c.withOpacity(0.05), blurRadius: 20, spreadRadius: -5),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              color: Colors.white.withOpacity(0.04),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(t, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          child: Text(v, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-                        ),
-                      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Hitung ukuran dinamis berdasarkan lebar kartu
+        final cardWidth = constraints.maxWidth;
+        final isVerySmall = cardWidth < 120;
+        
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            boxShadow: [
+              BoxShadow(color: c.withOpacity(0.05), blurRadius: 20, spreadRadius: -5),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(
+                padding: EdgeInsets.all(isVerySmall ? 6 : 8),
+                color: Colors.white.withOpacity(0.04),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              t,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.4),
+                                fontSize: isVerySmall ? 7 : 8,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              v,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isVerySmall ? 16 : 18,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: c.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: c.withOpacity(0.2)),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: EdgeInsets.all(isVerySmall ? 4 : 6),
+                      decoration: BoxDecoration(
+                        color: c.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: c.withOpacity(0.2)),
+                      ),
+                      child: Icon(i, color: c, size: isVerySmall ? 14 : 16),
                     ),
-                    child: Icon(i, color: c, size: 20),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
