@@ -42,9 +42,6 @@ class _LoginPageState extends State<LoginPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-
-      // 🔧 PERUBAHAN: Navigasi ke Dashboard untuk login dan register
-      // 🔧 PERUBAHAN: Atur username dengan benar (dari email untuk login, dari field untuk register)
       String username = isLogin
           ? _emailController.text.split('@')[0]
           : _usernameController.text;
