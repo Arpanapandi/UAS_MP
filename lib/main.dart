@@ -1,3 +1,4 @@
+import 'package:aplikasi_project_uas/pages/login.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pinjam Barang Perpustakaan',
       theme: ThemeData(primarySwatch: Colors.blueGrey),
-      home: Dashboard(),
+      home: LoginPage(),
     );
   }
 }
