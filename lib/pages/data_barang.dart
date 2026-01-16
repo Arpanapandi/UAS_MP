@@ -192,71 +192,75 @@ class _DataBarangState extends State<DataBarang> {
           SizedBox(height: 16),
 
           Expanded(
-            child: GridView.builder(
-              padding: EdgeInsets.all(16),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: items.length,
-              itemBuilder: (_, i) {
-                final item = items[i];
-
-                return glassCard(
-                  child: Column(
-                    children: [
-
-                      Expanded(
-                        child: Image.network(item.image, fit: BoxFit.cover),
-                      ),
-
-                      SizedBox(height: 8),
-
-                      Text(item.nama,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-
-                      SizedBox(height: 4),
-
-                      Text('Stok: ${item.stok}', style: TextStyle(color: Color(0xFF34D399))),
-                      
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return GridView.builder(
+                  padding: EdgeInsets.all(16),
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 220, // ukuran kartu
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.62, // tinggi vs lebar card
+                  ),
+                  itemCount: items.length,
+                  itemBuilder: (_, i) {
+                    final item = items[i];
+                    return glassCard(
+                      child: Column(
                         children: [
-                          IconButton(
-                            icon: Icon(Icons.remove, color: Colors.white),
-                            onPressed: () => kurang(i),
+
+                          Expanded(
+                            child: Image.network(item.image, fit: BoxFit.cover),
                           ),
-                          Text(
-                            jumlahPinjam[i].toString(),
-                            style: TextStyle(color: Colors.white),
+
+                          SizedBox(height: 8),
+
+                          Text(item.nama,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.add, color: Colors.white),
-                            onPressed: () => tambah(i, item.stok),
+
+                          SizedBox(height: 4),
+
+                          Text('Stok: ${item.stok}', style: TextStyle(color: Color(0xFF34D399))),
+                          
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.remove, color: Colors.white),
+                                onPressed: () => kurang(i),
+                              ),
+                              Text(
+                                jumlahPinjam[i].toString(),
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.add, color: Colors.white),
+                                onPressed: () => tambah(i, item.stok),
+                              ),
+                            ],
                           ),
+
+                          ElevatedButton(
+                            onPressed: jumlahPinjam[i] > 0
+                                ? () {_konfirmasiPinjam(provider, items[i], jumlahPinjam[i], i);}
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: jumlahPinjam[i] > 0 ? Colors.blueAccent : Colors.grey, 
+                              minimumSize: Size(double.infinity, 36),
+                            ),
+                            child: Text('Pinjam', style: TextStyle(color: Colors.white)),
+                          )
+
                         ],
                       ),
-
-                      ElevatedButton(
-                        onPressed: jumlahPinjam[i] > 0
-                            ? () {_konfirmasiPinjam(provider, items[i], jumlahPinjam[i], i);}
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: jumlahPinjam[i] > 0 ? Colors.blueAccent : Colors.grey, 
-                          minimumSize: Size(double.infinity, 36),
-                        ),
-                        child: Text('Pinjam', style: TextStyle(color: Colors.white)),
-                      )
-
-                    ],
-                  ),
+                    );
+                  },
                 );
-              },
+              }
             ),
           ),
         ],
