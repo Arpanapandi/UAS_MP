@@ -74,6 +74,7 @@ class _DashboardState extends State<Dashboard> {
         username: widget.username ?? 'John Doe',
         email: widget.email ?? 'commander.john@simba.id',
       ),
+      DaftarBarangPage(inventory: _inventory),
       ManageBarangPage(
         inventory: _inventory,
         onAdd: _addBarang,
@@ -151,9 +152,10 @@ class _DashboardState extends State<Dashboard> {
             child: BottomNavigationBar(
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Home'),
-                BottomNavigationBarItem(icon: Icon(Icons.rocket_launch_rounded), label: 'Barang'),
+                BottomNavigationBarItem(icon: Icon(Icons.list_alt_rounded), label: 'Daftar'),
+                BottomNavigationBarItem(icon: Icon(Icons.edit_note_rounded), label: 'Kelola'),
                 BottomNavigationBarItem(icon: Icon(Icons.analytics_rounded), label: 'Pinjam'),
-                BottomNavigationBarItem(icon: Icon(Icons.assignment_return_rounded), label: 'Kembalikan'),
+                BottomNavigationBarItem(icon: Icon(Icons.assignment_return_rounded), label: 'Kembali'),
               ],
               currentIndex: _selectedIndex,
               selectedItemColor: const Color(0xFF60A5FA),
@@ -412,26 +414,26 @@ class HomePage extends StatelessWidget {
                                     title: const Text('Role', style: TextStyle(color: Colors.white)),
                                     subtitle: const Text('Super Administrator', style: TextStyle(color: Colors.white54)),
                                   ),
-                                  const SizedBox(height: 20),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.redAccent.withOpacity(0.2),
-                                        foregroundColor: Colors.redAccent,
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                      ),
-                                      icon: const Icon(Icons.logout),
-                                      label: const Text('LOGOUT SYSTEM'),
-                                      onPressed: () {
-                                        Navigator.pop(ctx); // Tutup dialog
-                                        Navigator.pushReplacement(
-                                          context, 
-                                          MaterialPageRoute(builder: (context) => const LoginPage()),
-                                        );
-                                      },
-                                    ),
-                                  ),
+                                  // const SizedBox(height: 20),
+                                  // SizedBox(
+                                  //   width: double.infinity,
+                                  //   child: ElevatedButton.icon(
+                                  //     style: ElevatedButton.styleFrom(
+                                  //       backgroundColor: Colors.redAccent.withOpacity(0.2),
+                                  //       foregroundColor: Colors.redAccent,
+                                  //       padding: const EdgeInsets.symmetric(vertical: 16),
+                                  //     ),
+                                  //     icon: const Icon(Icons.logout),
+                                  //     label: const Text('LOGOUT SYSTEM'),
+                                  //     onPressed: () {
+                                  //       Navigator.pop(ctx); // Tutup dialog
+                                  //       Navigator.pushReplacement(
+                                  //         context, 
+                                  //         MaterialPageRoute(builder: (context) => const LoginPage()),
+                                  //       );
+                                  //     },
+                                  //   ),
+                                  // ),
                                 ],
                               ),
                             ),
@@ -585,6 +587,208 @@ class HomePage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// --- DAFTAR BARANG PAGE ---
+class DaftarBarangPage extends StatelessWidget {
+  final List<Barang> inventory;
+  const DaftarBarangPage({super.key, required this.inventory});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF60A5FA).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.inventory_2_rounded, color: Color(0xFF60A5FA), size: 28),
+                ),
+                const SizedBox(width: 16),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Daftar Barang',
+                      style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Inventaris Lengkap',
+                      style: TextStyle(color: Colors.white54, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // List Barang
+          Expanded(
+            child: inventory.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.inbox_rounded, size: 80, color: Colors.white.withOpacity(0.2)),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum ada barang',
+                          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    itemCount: inventory.length,
+                    itemBuilder: (context, index) {
+                      final barang = inventory[index];
+                      return _buildBarangCard(barang, index);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBarangCard(Barang barang, int index) {
+    // Warna gradient berdasarkan index
+    final colors = [
+      [const Color(0xFF60A5FA), const Color(0xFF818CF8)],
+      [const Color(0xFF34D399), const Color(0xFF10B981)],
+      [const Color(0xFFF59E0B), const Color(0xFFF97316)],
+      [const Color(0xFFEC4899), const Color(0xFFEF4444)],
+    ];
+    final colorPair = colors[index % colors.length];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [colorPair[0].withOpacity(0.1), colorPair[1].withOpacity(0.05)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [colorPair[0], colorPair[1]],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorPair[0].withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.category_rounded, color: Colors.white, size: 32),
+                ),
+                const SizedBox(width: 20),
+                
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        barang.nama,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildInfoChip(Icons.inventory, 'Stok: ${barang.stok}', colorPair[0]),
+                          const SizedBox(width: 12),
+                          _buildInfoChip(Icons.tag, 'ID: ${barang.id}', colorPair[1]),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Stock Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: barang.stok > 10 
+                        ? const Color(0xFF34D399).withOpacity(0.2)
+                        : const Color(0xFFF87171).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: barang.stok > 10 
+                          ? const Color(0xFF34D399)
+                          : const Color(0xFFF87171),
+                    ),
+                  ),
+                  child: Text(
+                    barang.stok > 10 ? 'Tersedia' : 'Terbatas',
+                    style: TextStyle(
+                      color: barang.stok > 10 
+                          ? const Color(0xFF34D399)
+                          : const Color(0xFFF87171),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
+          ),
+        ],
       ),
     );
   }
