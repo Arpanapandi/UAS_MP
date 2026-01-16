@@ -34,51 +34,67 @@ class _DataBarangState extends State<DataBarang> {
     }
   }
 
+  /// ================= GLOW SPOT (BACKGROUND) =================
+  Widget _buildGlowSpot(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: color, blurRadius: 150, spreadRadius: 50)],
+      ),
+    );
+  }
+
   /// ================= KERANJANG =================
   void _showKeranjang() {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: Color(0xFF030712),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Keranjang Pinjaman', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        backgroundColor: Color.fromARGB(255, 66, 77, 108),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 420), // ini untuk batas maksimal desktop
 
-              SizedBox(height: 16),
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Keranjang Pinjaman', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                SizedBox(height: 16),
 
-              Consumer<PeminjamanProvider>(
-                builder: (context, peminjamanProvider, _) {
-                  final peminjaman = peminjamanProvider.listBelumDikembalikan;
-                  if (peminjaman.isEmpty) {
-                    return Text('Belum ada pinjaman', style: TextStyle(color: Colors.white54));
-                  }
-                  return Column(
-                    children: peminjaman.map((p) {
-                      return ListTile(
-                        title: Text(p.namaBarang, style: TextStyle(color: Colors.white)),
-                        trailing: Text('x${p.jumlah}', style: TextStyle(color: Colors.white70)),
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
+                Consumer<PeminjamanProvider>(
+                  builder: (context, peminjamanProvider, _) {
+                    final peminjaman = peminjamanProvider.listBelumDikembalikan;
+                    if (peminjaman.isEmpty) {
+                      return Text('Belum ada pinjaman', style: TextStyle(color: Colors.white54));
+                    }
+                    return Column(
+                      children: peminjaman.map((p) {
+                        return ListTile(
+                          title: Text(p.namaBarang, style: TextStyle(color: Colors.white)),
+                          trailing: Text('x${p.jumlah}', style: TextStyle(color: Colors.white70)),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
 
-              SizedBox(height: 12),
+                SizedBox(height: 12),
 
-              ElevatedButton(onPressed: () => Navigator.pop(context),
-                child: Text('Tutup'),
-              ),
-            ],
-          ),
+                ElevatedButton(onPressed: () => Navigator.pop(context),
+                  child: Text('Tutup'),
+                ),
+              ],
+            ),
+          )
         ),
       ),
     );
   }
-
 
   /// ================= KONFIRMASI =================
   Future<void> _konfirmasiPinjam(
@@ -91,28 +107,26 @@ class _DataBarangState extends State<DataBarang> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Konfirmasi Pinjam'),
-        content: 
-          Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Apakah anda yakin akan meminjam barang ini?\n\n', style: TextStyle(color: Colors.white,fontSize: 18, fontWeight: FontWeight.bold)
-                ),
-                TextSpan(
-                  text: 'Pengembalian atau pembatalan harus dikonfirmasi ke petugas perpustakaan.', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w400),
-                ),
-              ],
-            ),
-            textAlign: TextAlign.center,
+        title: Text('Konfirmasi Pinjam', style: TextStyle(fontWeight: FontWeight.bold),),
+        content: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'Apakah anda yakin akan meminjam barang ini?\n', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              TextSpan(
+                text: 'Pengembalian atau pembatalan harus dikonfirmasi ke petugas perpustakaan.', style: TextStyle(color: Colors.black, fontSize: 14),
+              ),
+            ],
           ),
-
+          textAlign: TextAlign.center,
+        ),
+        
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false),
             child: Text('Batal'),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true),
             child: Text('Ya'),
           ),
         ],
@@ -133,6 +147,7 @@ class _DataBarangState extends State<DataBarang> {
     }
   }
 
+  /// ================= GLASS CARD =================
   Widget glassCard({required Widget child}) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -160,108 +175,122 @@ class _DataBarangState extends State<DataBarang> {
 
     return Scaffold(
       backgroundColor: Color(0xFF030712),
-      body: Column(
+      body: Stack(
         children: [
-
-          /// APPBAR
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [Color(0xFF1E3A8A), Color(0xFF312E81)]),
-            ),
-
-            child: Row(
-              children: [
-                Icon(Icons.inventory_2, color: Colors.white),
-                SizedBox(width: 10),
-                Text('Pinjam Barang Perpustakaan', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                Spacer(),
-                IconButton(
-                  icon: Icon(Icons.shopping_cart, color: Colors.white),
-                  onPressed: _showKeranjang,
-                ),
-              ],
-            ),
-
+          Positioned(
+            top: -100,
+            right: -100,
+            child: _buildGlowSpot(250, Color(0xFF3B82F6).withOpacity(0.15)),
+          ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: _buildGlowSpot(300, Color(0xFF8B5CF6).withOpacity(0.15)),
           ),
 
-          SizedBox(height: 16),
+          /// ================= CONTENT =================
+          Column(
+            children: [
+              /// APPBAR
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  // gradient: LinearGradient(colors: [ Color(0xFF1E3A8A), Color(0xFF312E81)]),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.inventory_2, color: Colors.white),
+                    SizedBox(width: 10),
+                    Text('PINJAM BARANG KAMPUS', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                    Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.shopping_cart, color: Colors.white),
+                      onPressed: _showKeranjang,
+                    ),
+                  ],
+                ),
+              ),
 
-          Text('Daftar Barang', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+              SizedBox(height: 16),
 
-          SizedBox(height: 16),
+              Text('Daftar Barang', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
 
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return GridView.builder(
-                  padding: EdgeInsets.all(16),
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 220, // ukuran kartu
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.62, // tinggi vs lebar card
-                  ),
-                  itemCount: items.length,
-                  itemBuilder: (_, i) {
-                    final item = items[i];
-                    return glassCard(
-                      child: Column(
-                        children: [
+              SizedBox(height: 16),
 
-                          Expanded(
-                            child: Image.network(item.image, fit: BoxFit.cover),
-                          ),
-
-                          SizedBox(height: 8),
-
-                          Text(item.nama,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          ),
-
-                          SizedBox(height: 4),
-
-                          Text('Stok: ${item.stok}', style: TextStyle(color: Color(0xFF34D399))),
-                          
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return GridView.builder(
+                      padding: EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 220,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.62,
+                      ),
+                      itemCount: items.length,
+                      itemBuilder: (_, i) {
+                        final item = items[i];
+                        
+                        return glassCard(
+                          child: Column(
                             children: [
-                              IconButton(
-                                icon: Icon(Icons.remove, color: Colors.white),
-                                onPressed: () => kurang(i),
+                              Expanded(
+                                child: 
+                                  Image.asset('image/laptop.jpg', fit: BoxFit.cover)),
+                              SizedBox(height: 8),
+                              Text(item.nama,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               ),
-                              Text(
-                                jumlahPinjam[i].toString(),
-                                style: TextStyle(color: Colors.white),
+                              SizedBox(height: 4),
+                              Text('Stok: ${item.stok}', style: TextStyle(color: Color(0xFF34D399))),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.remove, color: Colors.white),
+                                    onPressed: () => kurang(i),
+                                  ),
+                                  Text(
+                                    jumlahPinjam[i].toString(),
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.add, color: Colors.white),
+                                    onPressed: () => tambah(i, item.stok),
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: Icon(Icons.add, color: Colors.white),
-                                onPressed: () => tambah(i, item.stok),
+                              ElevatedButton(
+                                onPressed: jumlahPinjam[i] > 0
+                                  ? () {_konfirmasiPinjam(
+                                          provider,
+                                          items[i],
+                                          jumlahPinjam[i],
+                                          i,
+                                        );
+                                       }
+                                  : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: jumlahPinjam[i] > 0
+                                      ? Colors.blueAccent
+                                      : Colors.grey,
+                                  minimumSize: Size(double.infinity, 36),
+                                ),
+                                child: Text('Pinjam', style:TextStyle(color: Colors.white)),
                               ),
                             ],
                           ),
-
-                          ElevatedButton(
-                            onPressed: jumlahPinjam[i] > 0
-                                ? () {_konfirmasiPinjam(provider, items[i], jumlahPinjam[i], i);}
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: jumlahPinjam[i] > 0 ? Colors.blueAccent : Colors.grey, 
-                              minimumSize: Size(double.infinity, 36),
-                            ),
-                            child: Text('Pinjam', style: TextStyle(color: Colors.white)),
-                          )
-
-                        ],
-                      ),
+                        );
+                      },
                     );
                   },
-                );
-              }
-            ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

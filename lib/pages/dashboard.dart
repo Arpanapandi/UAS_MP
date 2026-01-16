@@ -9,7 +9,7 @@ import '../model/Model_data-barang.dart';
 import '../pages/data_peminjaman.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+  const Dashboard({super.key, required String username});
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -111,7 +111,7 @@ class _DashboardState extends State<Dashboard> {
                   label: 'Daftar Barang',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.inventory_2_rounded),
+                  icon: Icon(Icons.history),
                   label: 'Data Peminjaman',
                 ),
               ],
@@ -281,7 +281,7 @@ class ManageBarangPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('ASSET MANAGEMENT'),
+        title: Text('ASSET MANAGEMENT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
         backgroundColor: Colors.transparent,
       ),
       body: ListView.builder(
