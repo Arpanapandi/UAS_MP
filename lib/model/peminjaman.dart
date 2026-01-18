@@ -24,7 +24,6 @@ class _PeminjamanPageState extends State<PeminjamanPage> {
     getData();
   }
 
-  // ================= GET DATA =================
   Future<void> getData() async {
     final res = await http.get(Uri.parse("$baseUrl/peminjaman"));
     if (res.statusCode == 200) {
@@ -34,7 +33,6 @@ class _PeminjamanPageState extends State<PeminjamanPage> {
     }
   }
 
-  // ================= TAMBAH DATA =================
   Future<void> tambahData() async {
     final res = await http.post(
       Uri.parse("$baseUrl/peminjaman"),
@@ -54,13 +52,11 @@ class _PeminjamanPageState extends State<PeminjamanPage> {
     }
   }
 
-  // ================= HAPUS DATA =================
   Future<void> hapusData(id) async {
     await http.delete(Uri.parse("$baseUrl/peminjaman/$id"));
     getData();
   }
 
-  // ================= FORM TAMBAH =================
   void showForm() {
     showDialog(
       context: context,
@@ -98,7 +94,6 @@ class _PeminjamanPageState extends State<PeminjamanPage> {
     );
   }
 
-  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
