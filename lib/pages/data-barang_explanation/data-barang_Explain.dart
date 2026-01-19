@@ -7,14 +7,14 @@ import 'package:aplikasi_project_uas/provider/item_provider.dart';
 import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
 
 class DataBarang extends StatefulWidget {
-  DataBarang({super.key});
+  const DataBarang({super.key});
 
   @override
   State<DataBarang> createState() => _DataBarangState();
 }
 
 class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _DataBarangState itu private (hanya dipakai di file ini).
-  List<int> jumlahPinjam = []; // variabel list kosong ini nanti di isi lewat _syncJumlahPinjam
+  List<int> jumlahPinjam = []; // variabel list kosong ini nanti di isi lewat _syncJumlahPinjam yang nantinya diisi lewat items.length dari ItemProvider
 
   void _syncJumlahPinjam(int length) {
     /* 
@@ -26,8 +26,8 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
 
       /* 
       selanjutnya, kita ingin agar setiap barang selalu punya “slot” jumlah pinjam sendiri, mulai dari nol.
-      - dengan List.generate kita bisa bikin list baru dengan panjang length, dan isi awal semua elemen = 0, 
-        yang kita simpan di varibel "_". sebenarnya variable nya ga penting, yg penting cuma 0 nya aja
+      - dengan List.generate kita bisa bikin list baru dengan panjang length, dan isi awal semua elemen = 0, yang kita simpan di varibel "_". 
+        sebenarnya variable nya ga penting, yg penting cuma 0 nya aja
       */
       // jumlahPinjam = List.generate(length, (_) => 0);
       jumlahPinjam = List.generate(length, (_) => 0);
@@ -48,12 +48,21 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
   }
 
   /*
-  ini untuk bagian kurangi jumlaj barangnya
+  ini untuk bagian kurangi jumlah barangnya
   */
   void kurang(int i) {
     if (jumlahPinjam[i] > 0) {
       setState(() => jumlahPinjam[i]--);
     }
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ItemProvider>(context, listen: false).fetchItems();
+    });
   }
 
 
@@ -97,12 +106,44 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
   }
 
 
+  /* 
+  lanjut ke dalam method utama flutter
+  */
   @override
   Widget build(BuildContext context) {
+    
+    // pertama, kita harus siapin data terbaru dari provider, terus sinkronin jumlahPinjam sebelum bikin tampilan.
+
+    /*
+    kita harus ambil data barang terbaru dari ItemProvider. dan Kalau ada perubahan di provider, widget ini otomatis rebuild.
+    kita bisa gunakan "watch" untuk rebuild otomatis, dengan "read" kita tidak bisa rebuild otomatis
+    */
     final provider = context.watch<ItemProvider>();
+
+    // lanjut kita ambil list barang dari provider supaya gampang dipakai di kode selanjutnya.
     final items = provider.items;
 
+  
     _syncJumlahPinjam(items.length);
+
+    if (provider.isLoading) {
+      return Scaffold(
+        backgroundColor: Color(0xFF030712),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (provider.error != null) {
+      return Scaffold(
+        backgroundColor: Color(0xFF030712),
+        body: Center(
+          child: Text(
+            "Error: ${provider.error}",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Color(0xFF030712),
@@ -125,9 +166,6 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
               /// APPBAR
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  // gradient: LinearGradient(colors: [ Color(0xFF1E3A8A), Color(0xFF312E81)]),
-                ),
                 child: Row(
                   children: [
                     Icon(Icons.inventory_2, color: Colors.white),
@@ -162,15 +200,18 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
                       itemCount: items.length,
                       itemBuilder: (_, i) {
                         final item = items[i];
-                        
+
                         return glassCard(
                           child: Column(
                             children: [
                               Expanded(
-                                child: 
-                                  Image.asset('image/laptop.jpg', fit: BoxFit.cover)),
+                                child: item.image.isNotEmpty
+                                  ? Image.network(item.image, fit: BoxFit.cover)
+                                  : Image.asset('assets/image/laptop.jpg', fit: BoxFit.cover),
+                              ),
                               SizedBox(height: 8),
-                              Text(item.nama,
+                              Text(
+                                item.nama,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.center,
@@ -197,21 +238,15 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
                               ),
                               ElevatedButton(
                                 onPressed: jumlahPinjam[i] > 0
-                                  ? () {_konfirmasiPinjam(
-                                          provider,
-                                          items[i],
-                                          jumlahPinjam[i],
-                                          i,
-                                        );
-                                       }
-                                  : null,
+                                    ? () {
+                                        _konfirmasiPinjam(provider, items[i], jumlahPinjam[i], i);
+                                      }
+                                    : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: jumlahPinjam[i] > 0
-                                      ? Colors.blueAccent
-                                      : Colors.grey,
+                                  backgroundColor: jumlahPinjam[i] > 0 ? Colors.blueAccent : Colors.grey,
                                   minimumSize: Size(double.infinity, 36),
                                 ),
-                                child: Text('Pinjam', style:TextStyle(color: Colors.white)),
+                                child: Text('Pinjam', style: TextStyle(color: Colors.white)),
                               ),
                             ],
                           ),
@@ -228,7 +263,6 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
     );
   }
 
-  /// ================= KERANJANG =================
   void _showKeranjang() {
     showDialog(
       context: context,
@@ -238,8 +272,7 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
           borderRadius: BorderRadius.circular(20),
         ),
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 420), // ini untuk batas maksimal desktop
-
+          constraints: BoxConstraints(maxWidth: 420),
           child: Padding(
             padding: EdgeInsets.all(16),
             child: Column(
@@ -267,50 +300,46 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
 
                 SizedBox(height: 12),
 
-                ElevatedButton(onPressed: () => Navigator.pop(context),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
                   child: Text('Tutup'),
                 ),
               ],
             ),
-          )
+          ),
         ),
       ),
     );
   }
 
-  /// ================= KONFIRMASI =================
   Future<void> _konfirmasiPinjam(
     ItemProvider provider,
     Item item,
     int jumlah,
     int index,
-
   ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Konfirmasi Pinjam', style: TextStyle(fontWeight: FontWeight.bold),),
+        title: Text('Konfirmasi Pinjam', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text.rich(
           TextSpan(
             children: [
               TextSpan(
-                text: 'Apakah anda yakin akan meminjam barang ini?\n', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                text: 'Apakah anda yakin akan meminjam barang ini?\n',
+                style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
               ),
               TextSpan(
-                text: 'Pengembalian atau pembatalan harus dikonfirmasi ke petugas perpustakaan.', style: TextStyle(color: Colors.black, fontSize: 14),
+                text: 'Pengembalian atau pembatalan harus dikonfirmasi ke petugas perpustakaan.',
+                style: TextStyle(color: Colors.black, fontSize: 14),
               ),
             ],
           ),
           textAlign: TextAlign.center,
         ),
-        
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false),
-            child: Text('Batal'),
-          ),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true),
-            child: Text('Ya'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Batal')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text('Ya')),
         ],
       ),
     );
@@ -320,8 +349,7 @@ class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _Data
         provider.kurangiStok(item.id);
       }
 
-      Provider.of<PeminjamanProvider>(context, listen: false)
-          .tambahPeminjaman(item, jumlah);
+      Provider.of<PeminjamanProvider>(context, listen: false).tambahPeminjaman(item, jumlah);
 
       setState(() {
         jumlahPinjam[index] = 0;

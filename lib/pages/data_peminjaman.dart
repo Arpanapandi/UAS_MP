@@ -6,7 +6,7 @@ import '../provider/peminjaman_provider.dart';
 import '../provider/item_provider.dart';
 
 class HistoryPage extends StatelessWidget {
-  const HistoryPage({super.key});
+  HistoryPage({super.key});
 
   /// ================= GLOW SPOT =================
   Widget _buildGlowSpot(double size, Color color) {

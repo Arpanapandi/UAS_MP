@@ -8,8 +8,27 @@ class Item {
     required this.id,
     required this.nama,
     required this.stok,
-    required this.image,
+    required this.image, required String kategori,
   });
+
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
+      id: json["id"].toString(),
+      nama: json["nama"] ?? "",
+      stok: int.parse(json["stok"].toString()),
+      image: json["image"] ?? "", 
+      kategori: json["kategori"] ?? "",
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "nama": nama,
+      "stok": stok,
+      "image": image,
+    };
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -17,4 +36,6 @@ class Item {
 
   @override
   int get hashCode => id.hashCode;
+
+  get kategori => null;
 }
