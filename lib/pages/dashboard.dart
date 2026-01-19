@@ -11,11 +11,18 @@ import '../provider/peminjaman_provider.dart';
 import '../model/Model_data-barang.dart';
 
 class Dashboard extends StatefulWidget {
-  final String? username;  // Nama user dari login (opsional)
-  final String? email;     // Email user dari login (opsional)
-  final String? password;  // Password (tidak ditampilkan, hanya untuk kompatibilitas)
+  final String? username;
+  final String? email;
+  final String? password;
+  final bool isAdmin; // Tambah ini
   
-  const Dashboard({super.key, this.username, this.email, this.password});
+  const Dashboard({
+    super.key, 
+    this.username, 
+    this.email, 
+    this.password,
+    this.isAdmin = false, // Default false (User biasa)
+  });
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -36,9 +43,10 @@ class _DashboardState extends State<Dashboard> {
       HomePage(
         username: widget.username ?? 'John Doe',
         email: widget.email ?? 'commander.john@simba.id',
+        isAdmin: widget.isAdmin,
       ),
-      DataBarang(),  // File teman kamu
-      HistoryPage(), // File teman kamu (Peminjaman)
+      DataBarang(isAdmin: widget.isAdmin),  // Kirim status admin ke sini
+      HistoryPage(), 
       const PlaceholderPage(title: 'Pengembalian', icon: Icons.assignment_return_rounded),
     ];
 
@@ -132,11 +140,13 @@ class _DashboardState extends State<Dashboard> {
 class HomePage extends StatelessWidget {
   final String username;
   final String email;
+  final bool isAdmin;
   
   const HomePage({
     super.key, 
     required this.username,
     required this.email,
+    required this.isAdmin,
   });
 
   @override
@@ -280,25 +290,30 @@ class HomePage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Good Evening, Commander',
-                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                    Text(
+                      isAdmin ? 'Good Evening, Commander' : 'Welcome, Cadet',
+                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                     // Status Badge dipindah ke kanan atas
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: isAdmin ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white.withOpacity(0.1)),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.circle, color: Color(0xFF34D399), size: 8),
-                          SizedBox(width: 6),
+                          Icon(Icons.circle, color: isAdmin ? Colors.redAccent : const Color(0xFF34D399), size: 8),
+                          const SizedBox(width: 6),
                           Text(
-                            'ONLINE',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                            isAdmin ? 'ADMIN ACCESS' : 'ONLINE',
+                            style: TextStyle(
+                              color: isAdmin ? Colors.redAccent : Colors.white, 
+                              fontSize: 10, 
+                              fontWeight: FontWeight.bold, 
+                              letterSpacing: 1
+                            ),
                           ),
                         ],
                       ),
