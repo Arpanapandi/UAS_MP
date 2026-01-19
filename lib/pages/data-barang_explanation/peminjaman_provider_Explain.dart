@@ -1,6 +1,6 @@
+import 'package:aplikasi_project_uas/model/Model_data-peminjaman.dart';
 import 'package:flutter/material.dart';
-import '../model/Model_data-barang.dart';
-import '../model/Model_data-peminjaman.dart';
+import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
 
 class PeminjamanProvider with ChangeNotifier {
   final List<Peminjaman> _listPeminjaman = [];

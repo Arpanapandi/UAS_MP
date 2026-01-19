@@ -1,11 +1,21 @@
+import 'package:aplikasi_project_uas/pages/login.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'pages/login.dart';
+
+import 'pages/dashboard.dart';
 import 'provider/item_provider.dart';
 import 'provider/peminjaman_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ItemProvider()),
+        ChangeNotifierProvider(create: (_) => PeminjamanProvider()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,20 +23,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ItemProvider()),
-        ChangeNotifierProvider(create: (_) => PeminjamanProvider()),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'SIMBA Dashboard',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3B82F6)),
-          useMaterial3: true,
-        ),
-        home: LoginPage(),
+    return MaterialApp(
+      title: 'UAS MP',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
       ),
+      home: PeminjamanPage(),
     );
   }
 }
