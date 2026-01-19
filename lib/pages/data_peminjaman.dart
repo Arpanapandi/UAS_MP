@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../provider/peminjaman_provider.dart';
 import '../provider/item_provider.dart';
 import '../model/Model_data-peminjaman.dart';
@@ -25,7 +24,7 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
     });
   }
 
-  void showForm(BuildContext context, {DataPeminjaman? item}) {
+  void showForm(BuildContext context, {Peminjaman? item}) {
     final pem = context.read<PeminjamanProvider>();
     final barang = context.read<ItemProvider>();
 
@@ -106,7 +105,8 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
           dropdownColor: const Color(0xFF020617),
           isExpanded: true,
           value: pem.selectedBarangId,
-          hint: const Text("Pilih Barang", style: TextStyle(color: Colors.white54)),
+          hint: const Text("Pilih Barang",
+              style: TextStyle(color: Colors.white54)),
           items: barang.items
               .map(
                 (e) => DropdownMenuItem<int>(
@@ -116,7 +116,7 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
                 ),
               )
               .toList(),
-          onChanged: (v) => pem.setBarang(v),
+          onChanged: (v) => pem.selectedBarangId = v,
         ),
       ),
     );
@@ -152,7 +152,10 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       "Data Peminjaman",
-                      style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -171,7 +174,8 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
                     decoration: InputDecoration(
                       hintText: "Cari peminjam / barang...",
                       hintStyle: const TextStyle(color: Colors.white38),
-                      prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                      prefixIcon:
+                          const Icon(Icons.search, color: Colors.white54),
                       filled: true,
                       fillColor: Colors.white.withOpacity(0.05),
                       border: OutlineInputBorder(
@@ -186,9 +190,12 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
                   child: pem.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : list.isEmpty
-                          ? const Center(child: Text("Data kosong", style: TextStyle(color: Colors.white54)))
+                          ? const Center(
+                              child: Text("Data kosong",
+                                  style: TextStyle(color: Colors.white54)))
                           : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               itemCount: list.length,
                               itemBuilder: (c, i) {
                                 final item = list[i];
@@ -197,36 +204,50 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
                                   key: ValueKey(item.id),
                                   direction: DismissDirection.endToStart,
                                   background: Container(
-                                    margin: const EdgeInsets.symmetric(vertical: 6),
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 6),
                                     padding: const EdgeInsets.only(right: 20),
                                     alignment: Alignment.centerRight,
                                     decoration: BoxDecoration(
                                       color: Colors.redAccent,
                                       borderRadius: BorderRadius.circular(18),
                                     ),
-                                    child: const Icon(Icons.delete, color: Colors.white),
+                                    child: const Icon(Icons.delete,
+                                        color: Colors.white),
                                   ),
                                   onDismissed: (_) => pem.hapus(item.id),
                                   child: GestureDetector(
-                                    onTap: () => showForm(context, item: item),
+                                    onTap: () =>
+                                        showForm(context, item: item),
                                     child: Container(
-                                      margin: const EdgeInsets.symmetric(vertical: 6),
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 6),
                                       padding: const EdgeInsets.all(14),
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(18),
-                                        color: Colors.white.withOpacity(0.05),
-                                        border: Border.all(color: Colors.white12),
+                                        borderRadius:
+                                            BorderRadius.circular(18),
+                                        color:
+                                            Colors.white.withOpacity(0.05),
+                                        border:
+                                            Border.all(color: Colors.white12),
                                       ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(item.namaBarang,
-                                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight:
+                                                      FontWeight.w600)),
                                           const SizedBox(height: 4),
-                                          Text("Peminjam: ${item.namaPeminjam}",
-                                              style: const TextStyle(color: Colors.white54)),
+                                          Text(
+                                              "Peminjam: ${item.namaPeminjam}",
+                                              style: const TextStyle(
+                                                  color: Colors.white54)),
                                           Text("Jumlah: ${item.jumlah}",
-                                              style: const TextStyle(color: Colors.white54)),
+                                              style: const TextStyle(
+                                                  color: Colors.white54)),
                                         ],
                                       ),
                                     ),
@@ -243,7 +264,12 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
     );
   }
 
-  Widget _glow({double? top, double? bottom, double? left, double? right, required Color color}) {
+  Widget _glow(
+      {double? top,
+      double? bottom,
+      double? left,
+      double? right,
+      required Color color}) {
     return Positioned(
       top: top,
       bottom: bottom,
@@ -254,7 +280,12 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
         height: 300,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 120, spreadRadius: 40)],
+          boxShadow: [
+            BoxShadow(
+                color: color.withOpacity(0.2),
+                blurRadius: 120,
+                spreadRadius: 40)
+          ],
         ),
       ),
     );
@@ -271,16 +302,21 @@ class _DataPeminjamanPageState extends State<DataPeminjamanPage> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.assignment, color: Colors.blueAccent, size: 32),
+          const Icon(Icons.assignment,
+              color: Colors.blueAccent, size: 32),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Total Peminjaman", style: TextStyle(color: Colors.white54)),
+              const Text("Total Peminjaman",
+                  style: TextStyle(color: Colors.white54)),
               const SizedBox(height: 4),
               Text(
                 total.toString(),
-                style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold),
               ),
             ],
           ),
