@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'pages/dashboard.dart';
+import 'package:provider/provider.dart';
+import 'pages/login.dart';
+import 'provider/item_provider.dart';
+import 'provider/peminjaman_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,14 +13,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'SIMBA Dashboard',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3B82F6)),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ItemProvider()),
+        ChangeNotifierProvider(create: (_) => PeminjamanProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'SIMBA Dashboard',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3B82F6)),
+          useMaterial3: true,
+        ),
+        home: LoginPage(),
       ),
-      home: Dashboard(),
     );
   }
 }

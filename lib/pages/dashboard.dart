@@ -45,7 +45,7 @@ class _DashboardState extends State<Dashboard> {
         email: widget.email ?? 'commander.john@simba.id',
         isAdmin: widget.isAdmin,
       ),
-      DataBarang(isAdmin: widget.isAdmin),  // Kirim status admin ke sini
+      DataBarang(isAdmin: widget.isAdmin),
       HistoryPage(), 
       const PlaceholderPage(title: 'Pengembalian', icon: Icons.assignment_return_rounded),
     ];
