@@ -1,37 +1,12 @@
 import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
 import 'package:flutter/material.dart';
-import 'package:aplikasi_project_uas/services/API_services.dart';
 
 class ItemProvider with ChangeNotifier {
   final List<Item> _items = [];
-  final Map<Item, int> _keranjang = {};
+  final Map<Item, int> _keranjang = {}; // <- tambahkan keranjang
 
   List<Item> get items => _items;
-  Map<Item, int> get keranjang => _keranjang;
-
-  bool isLoading = false;
-  String? error;
-
-  Future<void> fetchItems() async {
-    try {
-      isLoading = true;
-      notifyListeners();
-
-      final res = await ApiService.getBarang();
-
-      _items.clear();
-      for (var item in res) {
-        _items.add(Item.fromJson(item));
-      }
-
-      error = null;
-    } catch (e) {
-      error = e.toString();
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
+  Map<Item, int> get keranjang => _keranjang; // getter keranjang
 
   void tambahItem(Item item) {
     _items.add(item);
@@ -71,21 +46,21 @@ class ItemProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void tambahStok(String itemId, int jumlah) {
-    final index = _items.indexWhere((i) => i.id == itemId);
-    if (index == -1) return;
+void tambahStok(String itemId, int jumlah) {
+  final index = _items.indexWhere((i) => i.id == itemId);
+  if (index == -1) return;
 
-    final item = _items[index];
+  final item = _items[index];
 
-    _items[index] = Item(
-      id: item.id,
-      nama: item.nama,
-      stok: item.stok + jumlah,
-      image: item.image, kategori: '',
-    );
+  _items[index] = Item(
+    id: item.id,
+    nama: item.nama,
+    stok: item.stok + jumlah,
+    image: item.image, kategori: '',
+  );
 
-    notifyListeners();
-  }
+  notifyListeners();
+}
 
-  void ubahItem(Item item) {}
+
 }
