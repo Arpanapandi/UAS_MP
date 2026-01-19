@@ -7,32 +7,55 @@ import 'package:aplikasi_project_uas/provider/item_provider.dart';
 import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
 
 class DataBarang extends StatefulWidget {
-  DataBarang({super.key});
+  const DataBarang({super.key});
 
   @override
   State<DataBarang> createState() => _DataBarangState();
 }
 
-class _DataBarangState extends State<DataBarang> {
-  List<int> jumlahPinjam = [];
+class _DataBarangState extends State<DataBarang> { // pakai ini "_" karena _DataBarangState itu private (hanya dipakai di file ini).
+  List<int> jumlahPinjam = []; // variabel list kosong ini nanti di isi lewat _syncJumlahPinjam yang nantinya diisi lewat items.length dari ItemProvider
 
   void _syncJumlahPinjam(int length) {
+    /* 
+    kita buat logika:
+    jika panjang jumlahPinjam SAMA, kode di dalam {} dilewati dan fungsi langsung selesai. 
+    jika TIDAK sama dengan length, maka kode di dalam {} dijalankan.
+    */
     if (jumlahPinjam.length != length) {
-      jumlahPinjam = List.generate(length, (index) => 0);
+
+      /* 
+      selanjutnya, kita ingin agar setiap barang selalu punya “slot” jumlah pinjam sendiri, mulai dari nol.
+      - dengan List.generate kita bisa bikin list baru dengan panjang length, dan isi awal semua elemen = 0, yang kita simpan di varibel "_". 
+        sebenarnya variable nya ga penting, yg penting cuma 0 nya aja
+      */
+      // jumlahPinjam = List.generate(length, (_) => 0);
+      jumlahPinjam = List.generate(length, (_) => 0);
     }
   }
 
+  /* 
+  selanjutnya kita buat logika untuk tambah jumlah barang
+  - kita buat parameter stok untuk menentukan batas maksimal yang boleh di pinjam untuk barang itu 
+  - jika jumlahPinjam masih lebih kecil dari stok, ya berarti masih bisa nambah
+  - selanjutnya kan di bawah kita buat tombol untuk tambah jumlah barang, agar ui otomatis update ya kita harus pake setState
+    Kalau ga pakai setState, jumlah pinjam tetap bertambah di memori, tapi UI ga update.
+  */
   void tambah(int i, int stok) {
     if (jumlahPinjam[i] < stok) {
       setState(() => jumlahPinjam[i]++);
     }
   }
 
+  /*
+  ini untuk bagian kurangi jumlah barangnya
+  */
   void kurang(int i) {
     if (jumlahPinjam[i] > 0) {
       setState(() => jumlahPinjam[i]--);
     }
   }
+
 
   @override
   void initState() {
@@ -42,24 +65,35 @@ class _DataBarangState extends State<DataBarang> {
     });
   }
 
+
+  /// ================= GLASS CARD =================
+  /* 
+  Agar efek kaca (glassCard) ditulis sekali dan bisa dipakai di mana saja. Isi/konten kartu ditulis terpisah.
+  nanti di bawah tinggal di return, dan ini harus di return. karena bagian ini itu "required widget child" atau koran tanpa isi
+  */
   Widget glassCard({required Widget child}) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(16), // ini yang buat motong widget, semuanya sama isinya ikut kepotong
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8), // BackdropFilter nge-blur apa pun yang ada di belakang kartu. Kalau belakangnya polos/gelap, blur nggak keliatan. ubah ke 100 biar keliatan
         child: Container(
           padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            color: Colors.white.withOpacity(0.03), // bg card nya
+            borderRadius: BorderRadius.circular(16), // kalo ini punya container, ga akan ngaruh ke isi (img sm tombol)
+            border: Border.all(color: Colors.white.withOpacity(0.05)), // ini border atau sisi nya  
           ),
-          child: child,
+          child: child, // di bawah, ini di isi oleh child column sehingga memiliki banyak widget atau turunan 
         ),
       ),
     );
   }
 
+  /// ================= GLOW SPOT (BACKGROUND) =================
+  /* 
+  sama kaya glass card, agar bg reusable dan bisa ubah isi (ukuran & warna) tanpa bikin kode baru.. dengan menyediakan parameter size dan color
+  - disana width: size, color: color, dll. di isi oleh parameter "double size" dan "Color color. 
+  */
   Widget _buildGlowSpot(double size, Color color) {
     return Container(
       width: size,
@@ -71,11 +105,25 @@ class _DataBarangState extends State<DataBarang> {
     );
   }
 
+
+  /* 
+  lanjut ke dalam method utama flutter
+  */
   @override
   Widget build(BuildContext context) {
+    
+    // pertama, kita harus siapin data terbaru dari provider, terus sinkronin jumlahPinjam sebelum bikin tampilan.
+
+    /*
+    kita harus ambil data barang terbaru dari ItemProvider. dan Kalau ada perubahan di provider, widget ini otomatis rebuild.
+    kita bisa gunakan "watch" untuk rebuild otomatis, dengan "read" kita tidak bisa rebuild otomatis
+    */
     final provider = context.watch<ItemProvider>();
+
+    // lanjut kita ambil list barang dari provider supaya gampang dipakai di kode selanjutnya.
     final items = provider.items;
 
+  
     _syncJumlahPinjam(items.length);
 
     if (provider.isLoading) {
@@ -89,7 +137,10 @@ class _DataBarangState extends State<DataBarang> {
       return Scaffold(
         backgroundColor: Color(0xFF030712),
         body: Center(
-          child: Text("Error: ${provider.error}", style: TextStyle(color: Colors.white)),
+          child: Text(
+            "Error: ${provider.error}",
+            style: TextStyle(color: Colors.white),
+          ),
         ),
       );
     }
@@ -157,7 +208,6 @@ class _DataBarangState extends State<DataBarang> {
                                 child: item.image.isNotEmpty
                                   ? Image.network(item.image, fit: BoxFit.cover)
                                   : Image.asset('assets/image/laptop.jpg', fit: BoxFit.cover),
-
                               ),
                               SizedBox(height: 8),
                               Text(
@@ -188,12 +238,12 @@ class _DataBarangState extends State<DataBarang> {
                               ),
                               ElevatedButton(
                                 onPressed: jumlahPinjam[i] > 0
-                                    ? () {_konfirmasiPinjam(provider, items[i], jumlahPinjam[i], i);}
+                                    ? () {
+                                        _konfirmasiPinjam(provider, items[i], jumlahPinjam[i], i);
+                                      }
                                     : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: jumlahPinjam[i] > 0 
-                                    ? Colors.blueAccent 
-                                    : Colors.grey,
+                                  backgroundColor: jumlahPinjam[i] > 0 ? Colors.blueAccent : Colors.grey,
                                   minimumSize: Size(double.infinity, 36),
                                 ),
                                 child: Text('Pinjam', style: TextStyle(color: Colors.white)),

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "917302268945",
+    "project_id": "mobileprogramming-bf35e",
+    "storage_bucket": "mobileprogramming-bf35e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:917302268945:android:a3bdb0c2ae0c9362efcdb0",
+        "android_client_info": {
+          "package_name": "com.example.aplikasi_project_uas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAx4N1aXyqipI-X1xOLq31smDW2xOQrc5k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

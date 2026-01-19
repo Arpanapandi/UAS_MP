@@ -1,8 +1,21 @@
-import 'package:aplikasi_project_uas/model/peminjaman.dart';
+import 'package:aplikasi_project_uas/pages/login.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'pages/dashboard.dart';
+import 'provider/item_provider.dart';
+import 'provider/peminjaman_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ItemProvider()),
+        ChangeNotifierProvider(create: (_) => PeminjamanProvider()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
