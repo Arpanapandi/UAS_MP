@@ -1,14 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../provider/peminjaman_provider.dart';
 import '../provider/item_provider.dart';
 
 class HistoryPage extends StatelessWidget {
   HistoryPage({super.key});
 
-  /// ================= GLOW SPOT =================
   Widget _buildGlowSpot(double size, Color color) {
     return Container(
       width: size,
@@ -26,7 +24,6 @@ class HistoryPage extends StatelessWidget {
     );
   }
 
-  /// ================= GLASS CARD =================
   Widget _glassCard({required Widget child}) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -72,7 +69,6 @@ class HistoryPage extends StatelessWidget {
             ),
           ),
 
-          /// ================= CONTENT =================
           Column(
             children: [
               /// APPBAR
