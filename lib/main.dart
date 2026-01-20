@@ -5,11 +5,13 @@ import 'package:provider/provider.dart';
 import 'pages/dashboard.dart';
 import 'provider/item_provider.dart';
 import 'provider/peminjaman_provider.dart';
+import 'provider/auth_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ItemProvider()),
         ChangeNotifierProvider(create: (_) => PeminjamanProvider()),
       ],
@@ -30,7 +32,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: PeminjamanPage(),
+      home: LoginPage(),
     );
   }
 }

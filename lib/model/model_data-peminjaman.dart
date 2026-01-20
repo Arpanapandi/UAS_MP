@@ -1,36 +1,39 @@
 class Peminjaman {
-  final int id;
-  final int barangId;
+  final String id;
+  final String itemId; // Unified to itemId
   final String namaBarang;
-  final String namaPeminjam;
   final int jumlah;
   final DateTime tanggal;
+  bool sudahDikembalikan;
 
   Peminjaman({
     required this.id,
-    required this.barangId,
+    required this.itemId,
     required this.namaBarang,
-    required this.namaPeminjam,
     required this.jumlah,
     required this.tanggal,
+    this.sudahDikembalikan = false,
   });
 
   factory Peminjaman.fromJson(Map<String, dynamic> json) {
     return Peminjaman(
-      id: json['id'],
-      barangId: json['barang_id'],
-      namaBarang: json['barang']['nama_barang'], // relasi
-      namaPeminjam: json['nama_peminjam'],
-      jumlah: int.parse(json['jumlah'].toString()),
-      tanggal: DateTime.parse(json['created_at']),
+      id: json['id'].toString(),
+      itemId: json['itemId']?.toString() ?? json['barang_id']?.toString() ?? '',
+      namaBarang: json['namaBarang'] ?? json['nama_barang'] ?? json['barang']?['nama'] ?? 'Unknown',
+      jumlah: int.tryParse(json['jumlah'].toString()) ?? 0,
+      tanggal: DateTime.tryParse(json['tanggal'] ?? json['created_at'] ?? '') ?? DateTime.now(),
+      sudahDikembalikan: json['status'] == 'dikembalikan' || json['sudahDikembalikan'] == true,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'nama_peminjam': namaPeminjam,
-      'barang_id': barangId.toString(),
-      'jumlah': jumlah.toString(),
+      'id': id,
+      'itemId': itemId,
+      'namaBarang': namaBarang,
+      'jumlah': jumlah,
+      'tanggal': tanggal.toIso8601String(),
+      'status': sudahDikembalikan ? 'dikembalikan' : 'dipinjam',
     };
   }
 }

@@ -5,8 +5,21 @@ import 'package:provider/provider.dart';
 import '../provider/peminjaman_provider.dart';
 import '../provider/item_provider.dart';
 
-class HistoryPage extends StatelessWidget {
-  HistoryPage({super.key});
+class HistoryPage extends StatefulWidget {
+  const HistoryPage({super.key});
+
+  @override
+  State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PeminjamanProvider>(context, listen: false).fetchPeminjaman();
+    });
+  }
 
   /// ================= GLOW SPOT =================
   Widget _buildGlowSpot(double size, Color color) {
@@ -48,8 +61,9 @@ class HistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final peminjaman =
-        context.watch<PeminjamanProvider>().listPeminjaman;
+    // ... rest of build method
+    final provider = context.watch<PeminjamanProvider>();
+    final peminjaman = provider.listPeminjaman;
 
     return Scaffold(
       backgroundColor: const Color(0xFF030712),
@@ -81,14 +95,6 @@ class HistoryPage extends StatelessWidget {
                   horizontal: 16,
                   vertical: 14,
                 ),
-                decoration: const BoxDecoration(
-                  // gradient: LinearGradient(
-                  //   colors: [
-                  //     Color(0xFF1E3A8A),
-                  //     Color(0xFF312E81),
-                  //   ],
-                  // ),
-                ),
                 child: Row(
                   children: const [
                     Icon(Icons.history, color: Colors.white),
@@ -106,18 +112,42 @@ class HistoryPage extends StatelessWidget {
               ),
 
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: peminjaman.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'Belum ada data peminjaman',
-                            style: TextStyle(color: Colors.white54),
-                          ),
-                        )
-                      : ListView.builder(
-                          itemCount: peminjaman.length,
-                          itemBuilder: (context, index) {
+                child: provider.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : provider.error != null
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.error_outline,
+                                    color: Colors.redAccent, size: 48),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Error: ${provider.error}',
+                                  style: const TextStyle(color: Colors.white),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () => provider.fetchPeminjaman(),
+                                  child: const Text('Coba Lagi'),
+                                )
+                              ],
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: () => provider.fetchPeminjaman(),
+                            child: peminjaman.isEmpty
+                                ? const Center(
+                                    child: Text(
+                                      'Belum ada data peminjaman',
+                                      style: TextStyle(color: Colors.white54),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.all(16),
+                                    itemCount: peminjaman.length,
+                                    itemBuilder: (context, index) {
                             final data = peminjaman[index];
 
                             return Padding(
@@ -217,7 +247,7 @@ class HistoryPage extends StatelessWidget {
                                         SizedBox(
                                           width: double.infinity,
                                           child: ElevatedButton(
-                                            onPressed: () {
+                                            onPressed: () async {
                                               final itemProvider =
                                                   context.read<
                                                       ItemProvider>();
@@ -226,7 +256,7 @@ class HistoryPage extends StatelessWidget {
                                                       PeminjamanProvider>();
 
                                               // 1. Tambah stok barang
-                                              itemProvider.tambahStok(
+                                              await itemProvider.tambahStok(
                                                 data.itemId,
                                                 data.jumlah,
                                               );
@@ -236,7 +266,7 @@ class HistoryPage extends StatelessWidget {
                                                   .resetKeranjang();
 
                                               // 3. Konfirmasi pengembalian
-                                              peminjamanProvider
+                                              await peminjamanProvider
                                                   .konfirmasiPengembalian(
                                                       data.id);
                                             },

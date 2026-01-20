@@ -7,7 +7,8 @@ import 'package:aplikasi_project_uas/provider/item_provider.dart';
 import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
 
 class DataBarang extends StatefulWidget {
-  DataBarang({super.key});
+  final bool isAdmin;
+  DataBarang({super.key, this.isAdmin = false});
 
   @override
   State<DataBarang> createState() => _DataBarangState();
@@ -155,9 +156,39 @@ class _DataBarangState extends State<DataBarang> {
                             children: [
                               Expanded(
                                 child: item.image.isNotEmpty
-                                  ? Image.network(item.image, fit: BoxFit.cover)
-                                  : Image.asset('assets/image/laptop.jpg', fit: BoxFit.cover),
-
+                                  ? Image.network(
+                                      item.image, 
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey.shade800,
+                                          child: const Icon(
+                                            Icons.broken_image,
+                                            color: Colors.white54,
+                                            size: 40,
+                                          ),
+                                        );
+                                      },
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                    loadingProgress.expectedTotalBytes!
+                                                : null,
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : Container(
+                                      color: Colors.grey.shade800,
+                                      child: const Icon(
+                                        Icons.inventory_2,
+                                        color: Colors.white54,
+                                        size: 40,
+                                      ),
+                                    ),
                               ),
                               SizedBox(height: 8),
                               Text(
@@ -295,15 +326,35 @@ class _DataBarangState extends State<DataBarang> {
     );
 
     if (ok == true) {
-      for (int i = 0; i < jumlah; i++) {
-        provider.kurangiStok(item.id);
+      try {
+        // 🔥 OPTIMIZED: Single call with quantity
+        await provider.kurangiStok(item.id, jumlah: jumlah);
+
+        await Provider.of<PeminjamanProvider>(context, listen: false)
+            .tambahPeminjaman(item, jumlah);
+
+        setState(() {
+          jumlahPinjam[index] = 0;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Peminjaman berhasil dicatat'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal meminjam: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
-
-      Provider.of<PeminjamanProvider>(context, listen: false).tambahPeminjaman(item, jumlah);
-
-      setState(() {
-        jumlahPinjam[index] = 0;
-      });
     }
   }
 }

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dashboard.dart';
+import 'package:provider/provider.dart';
+import '../provider/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -31,30 +33,58 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isLogin ? 'Login successful!' : 'Registration successful!',
-          ),
-          backgroundColor: const Color(0xFF60A5FA),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      String username = isLogin
-          ? _emailController.text.split('@')[0]
-          : _usernameController.text;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      bool success;
+      
+      if (isLogin) {
+        success = await auth.login(
+          _emailController.text, // Assuming the backend handles 'username' field for email/username login
+          _passwordController.text
+        );
+      } else {
+        success = await auth.register(
+           _usernameController.text,
+           _emailController.text,
+           _passwordController.text
+        );
+      }
 
-      Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isLogin ? 'Login successful!' : 'Registration successful!'),
+            backgroundColor: const Color(0xFF60A5FA),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        
+        // Use username from auth provider or controller
+        String username = auth.currentUser?['username'] ?? (isLogin ? _emailController.text : _usernameController.text);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => Dashboard(username: username),
           ),
         );
-      });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.errorMessage ?? 'Authentication failed'),
+            backgroundColor: const Color(0xFFF87171),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
+  }
+
+  bool _isEmail(String input) {
+    return input.contains('@');
   }
 
   @override

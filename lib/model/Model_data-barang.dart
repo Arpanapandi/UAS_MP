@@ -3,30 +3,37 @@ class Item {
   final String nama;
   int stok;
   final String image;
+  final String kategori;
+  final String keterangan;
 
   Item({
     required this.id,
     required this.nama,
     required this.stok,
-    required this.image, required String kategori,
+    required this.image,
+    required this.kategori,
+    this.keterangan = '',
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
       id: json["id"].toString(),
-      nama: json["nama"] ?? "",
-      stok: int.parse(json["stok"].toString()),
-      image: json["image"] ?? "", 
-      kategori: json["kategori"] ?? "",
+      nama: json["nama_barang"] ?? json["nama"] ?? "Unknown",
+      stok: int.tryParse(json["stok"].toString()) ?? 0,
+      image: json["image"] ?? json["gambar"] ?? "", 
+      kategori: json["kategori"] ?? "Umum",
+      keterangan: json["keterangan"] ?? json["description"] ?? "",
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      "id": id,
+      "nama_barang": nama,
       "nama": nama,
       "stok": stok,
       "image": image,
+      "kategori": kategori,
+      "keterangan": keterangan,
     };
   }
 
@@ -36,6 +43,4 @@ class Item {
 
   @override
   int get hashCode => id.hashCode;
-
-  get kategori => null;
 }

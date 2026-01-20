@@ -1,6 +1,6 @@
 import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
 import 'package:flutter/material.dart';
-import 'package:aplikasi_project_uas/services/API_services.dart';
+import 'package:aplikasi_project_uas/services/barang_services.dart';
 
 class ItemProvider with ChangeNotifier {
   final List<Item> _items = [];
@@ -17,7 +17,7 @@ class ItemProvider with ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
-      final res = await ApiService.getBarang();
+      final res = await BarangService.getAllBarang();
 
       _items.clear();
       for (var item in res) {
@@ -33,31 +33,64 @@ class ItemProvider with ChangeNotifier {
     }
   }
 
-  void tambahItem(Item item) {
-    _items.add(item);
-    notifyListeners();
+  Future<void> tambahItem(Item item) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      
+      final newItemData = await BarangService.createBarang(item.toJson());
+      _items.add(Item.fromJson(newItemData));
+      
+      isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      isLoading = false;
+      error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 
-  void hapusItem(String id) {
-    _items.removeWhere((item) => item.id == id);
-    notifyListeners();
+  Future<void> hapusItem(String id) async {
+    try {
+      await BarangService.deleteBarang(id);
+      _items.removeWhere((item) => item.id == id);
+      notifyListeners();
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+    }
   }
 
-  void kurangiStok(String id) {
+  Future<void> kurangiStok(String id, {int jumlah = 1}) async {
     final index = _items.indexWhere((item) => item.id == id);
     if (index == -1) return;
-
+    
     final item = _items[index];
-    if (item.stok <= 0) return;
+    if (item.stok < jumlah) {
+      throw Exception("Stok tidak cukup");
+    }
 
-    _items[index] = Item(
-      id: item.id,
-      nama: item.nama,
-      stok: item.stok - 1,
-      image: item.image, kategori: '',
-    );
+    final newStok = item.stok - jumlah;
 
-    notifyListeners();
+    try {
+      // Optimistic update
+      _items[index] = Item(
+        id: item.id,
+        nama: item.nama,
+        stok: newStok,
+        image: item.image, 
+        kategori: item.kategori,
+      );
+      notifyListeners();
+
+      await BarangService.updateBarang(id, _items[index].toJson());
+    } catch (e) {
+       // Rollback if failed
+      _items[index] = item;
+      notifyListeners();
+      throw Exception("Gagal update stok: $e");
+    }
   }
 
   // ================= KERANJANG =================
@@ -71,21 +104,52 @@ class ItemProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void tambahStok(String itemId, int jumlah) {
+  Future<void> tambahStok(String itemId, int jumlah) async {
     final index = _items.indexWhere((i) => i.id == itemId);
     if (index == -1) return;
 
     final item = _items[index];
+    final newStok = item.stok + jumlah;
 
-    _items[index] = Item(
-      id: item.id,
-      nama: item.nama,
-      stok: item.stok + jumlah,
-      image: item.image, kategori: '',
-    );
-
-    notifyListeners();
+     try {
+       // Optimistic update
+      _items[index] = Item(
+        id: item.id,
+        nama: item.nama,
+        stok: newStok,
+        image: item.image, 
+        kategori: item.kategori,
+      );
+      notifyListeners();
+      
+      await BarangService.updateBarang(itemId, _items[index].toJson());
+    } catch (e) {
+        // Rollback
+       _items[index] = item;
+       notifyListeners();
+       rethrow;
+    }
   }
 
-  void ubahItem(Item item) {}
+  Future<void> ubahItem(Item item) async {
+     try {
+       isLoading = true;
+       notifyListeners();
+       
+       await BarangService.updateBarang(item.id, item.toJson());
+       
+       final index = _items.indexWhere((i) => i.id == item.id);
+       if (index != -1) {
+         _items[index] = item;
+       }
+       
+       isLoading = false;
+       notifyListeners();
+     } catch (e) {
+       isLoading = false;
+       error = e.toString();
+       notifyListeners();
+       rethrow;
+     }
+  }
 }
