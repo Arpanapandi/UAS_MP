@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'dashboard.dart';
+import 'package:aplikasi_project_uas/pages/dashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,6 +12,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool isLogin = true;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _usernameController = TextEditingController();
@@ -23,6 +25,8 @@ class _LoginPageState extends State<LoginPage> {
   void _toggleMode() {
     setState(() {
       isLogin = !isLogin;
+      _obscurePassword = true;
+      _obscureConfirmPassword = true;
       _formKey.currentState?.reset();
       _usernameController.clear();
       _emailController.clear();
@@ -47,6 +51,7 @@ class _LoginPageState extends State<LoginPage> {
           : _usernameController.text;
 
       Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -298,17 +303,30 @@ class _LoginPageState extends State<LoginPage> {
                                 child: TextFormField(
                                   controller: _passwordController,
                                   style: const TextStyle(color: Colors.white),
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                     labelText: 'Password',
-                                    prefixIcon: Icon(
+                                    prefixIcon: const Icon(
                                       Icons.lock,
                                       color: Colors.white70,
                                     ),
-                                    labelStyle: TextStyle(
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        color: Colors.white70,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _obscurePassword = !_obscurePassword;
+                                        });
+                                      },
+                                    ),
+                                    labelStyle: const TextStyle(
                                       color: Colors.white70,
                                     ),
                                   ),
-                                  obscureText: true,
+                                  obscureText: _obscurePassword,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter your password';
@@ -324,17 +342,31 @@ class _LoginPageState extends State<LoginPage> {
                                   child: TextFormField(
                                     controller: _confirmPasswordController,
                                     style: const TextStyle(color: Colors.white),
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       labelText: 'Confirm Password',
-                                      prefixIcon: Icon(
+                                      prefixIcon: const Icon(
                                         Icons.lock_outline,
                                         color: Colors.white70,
                                       ),
-                                      labelStyle: TextStyle(
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscureConfirmPassword
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: Colors.white70,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _obscureConfirmPassword =
+                                                !_obscureConfirmPassword;
+                                          });
+                                        },
+                                      ),
+                                      labelStyle: const TextStyle(
                                         color: Colors.white70,
                                       ),
                                     ),
-                                    obscureText: true,
+                                    obscureText: _obscureConfirmPassword,
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
                                         return 'Please confirm your password';
