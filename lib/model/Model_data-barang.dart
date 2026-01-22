@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:aplikasi_project_uas/services/api_services.dart';
+
 class Item {
   final String id;
   final String nama;
@@ -16,11 +19,29 @@ class Item {
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
+    String rawImage = json["image"] ?? json["gambar"] ?? "";
+    String imageUrl = "";
+    if (rawImage.isNotEmpty) {
+      if (rawImage.startsWith('http')) {
+        imageUrl = rawImage;
+      } else {
+        // Fallback for relative paths if needed, 
+        // though backend is expected to send absolute URLs now.
+        final String baseUrl = ApiService.baseServerUrl; 
+        if (rawImage.startsWith('/')) {
+            imageUrl = "$baseUrl$rawImage";
+        } else {
+            imageUrl = "$baseUrl/images/barang/$rawImage";
+        }
+      }
+      debugPrint("DEBUG: Image URL for '${json['nama_barang'] ?? 'Item'}': $imageUrl");
+    }
+
     return Item(
       id: json["id"].toString(),
       nama: json["nama_barang"] ?? json["nama"] ?? "Unknown",
       stok: int.tryParse(json["stok"].toString()) ?? 0,
-      image: json["image"] ?? json["gambar"] ?? "", 
+      image: imageUrl, 
       kategori: json["kategori"] ?? "Umum",
       keterangan: json["keterangan"] ?? json["description"] ?? "",
     );
@@ -29,11 +50,12 @@ class Item {
   Map<String, dynamic> toJson() {
     return {
       "nama_barang": nama,
-      "nama": nama,
       "stok": stok,
-      "image": image,
+      "gambar": image.split('/').last,
+      "image": image.split('/').last,
       "kategori": kategori,
       "keterangan": keterangan,
+      "description": keterangan,
     };
   }
 

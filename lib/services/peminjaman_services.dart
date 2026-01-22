@@ -1,4 +1,4 @@
-import 'package:aplikasi_project_uas/services/API_services.dart';
+import 'package:aplikasi_project_uas/services/api_services.dart';
 
 class PeminjamanService {
   static Future<List<dynamic>> getPeminjaman() async {
@@ -29,6 +29,10 @@ class PeminjamanService {
 
   static Future<void> kembalikanBarang(String id) async {
     // Backend uses standard resource update for status
-    await ApiService.put("peminjaman/$id", {"status": "dikembalikan"});
+    // Use POST with _method = PUT for reliability
+    await ApiService.post("peminjaman/$id", {
+      "status": "dikembalikan",
+      "_method": "PUT"
+    });
   }
 }

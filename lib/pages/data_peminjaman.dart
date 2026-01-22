@@ -255,20 +255,17 @@ class _HistoryPageState extends State<HistoryPage> {
                                                   context.read<
                                                       PeminjamanProvider>();
 
-                                              // 1. Tambah stok barang
-                                              await itemProvider.tambahStok(
-                                                data.itemId,
-                                                data.jumlah,
-                                              );
+                                              // 1. REMOVED: itemProvider.tambahStok(data.itemId, data.jumlah);
+                                              // Backend handles stock increment on Laravel side when status updated to 'dikembalikan'
 
                                               // 2. Reset keranjang
-                                              itemProvider
-                                                  .resetKeranjang();
+                                              itemProvider.resetKeranjang();
 
                                               // 3. Konfirmasi pengembalian
-                                              await peminjamanProvider
-                                                  .konfirmasiPengembalian(
-                                                      data.id);
+                                              await peminjamanProvider.konfirmasiPengembalian(data.id);
+
+                                              // 4. Refresh items to sync stock
+                                              await itemProvider.fetchItems();
                                             },
                                             style:
                                                 ElevatedButton

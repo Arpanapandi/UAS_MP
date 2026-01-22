@@ -1,6 +1,12 @@
 import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
 import 'package:flutter/material.dart';
 import 'package:aplikasi_project_uas/services/barang_services.dart';
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart'; // kIsWeb
+import 'package:image_picker/image_picker.dart'; // XFile
+import 'package:http_parser/http_parser.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ItemProvider with ChangeNotifier {
   final List<Item> _items = [];
@@ -11,6 +17,38 @@ class ItemProvider with ChangeNotifier {
 
   bool isLoading = false;
   String? error;
+
+  static const String _cacheKey = 'items_cache';
+
+  ItemProvider() {
+    _loadCache();
+  }
+
+  Future<void> _loadCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedData = prefs.getString(_cacheKey);
+      if (cachedData != null) {
+        final List<dynamic> decoded = jsonDecode(cachedData);
+        _items.clear();
+        for (var item in decoded) {
+          _items.add(Item.fromJson(item));
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Cache load error: $e");
+    }
+  }
+
+  Future<void> _saveCache(List<dynamic> rawData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_cacheKey, jsonEncode(rawData));
+    } catch (e) {
+      debugPrint("Cache save error: $e");
+    }
+  }
 
   Future<void> fetchItems() async {
     try {
@@ -24,6 +62,7 @@ class ItemProvider with ChangeNotifier {
         _items.add(Item.fromJson(item));
       }
 
+      await _saveCache(res);
       error = null;
     } catch (e) {
       error = e.toString();
@@ -33,13 +72,52 @@ class ItemProvider with ChangeNotifier {
     }
   }
 
-  Future<void> tambahItem(Item item) async {
+  Future<void> tambahItem(Item item, {XFile? imageFile}) async {
     try {
       isLoading = true;
       notifyListeners();
       
-      final newItemData = await BarangService.createBarang(item.toJson());
-      _items.add(Item.fromJson(newItemData));
+      dynamic data;
+      if (imageFile != null) {
+        String fileName = imageFile.name;
+        String ext = fileName.split('.').last.toLowerCase();
+        if (ext == 'jpg') ext = 'jpeg';
+        
+        MultipartFile multipartFile;
+        if (kIsWeb) {
+             multipartFile = MultipartFile.fromBytes(
+               await imageFile.readAsBytes(),
+               filename: fileName,
+               contentType: MediaType('image', ext),
+             );
+        } else {
+             multipartFile = await MultipartFile.fromFile(
+               imageFile.path, 
+               filename: fileName,
+               contentType: MediaType('image', ext),
+             );
+        }
+
+        data = FormData.fromMap({
+          "nama_barang": item.nama,
+          "stok": item.stok.toString(),
+          "kategori": item.kategori,
+          "keterangan": item.keterangan,
+          "gambar": multipartFile,
+        });
+      } else {
+        data = {
+          "nama_barang": item.nama,
+          "stok": item.stok.toString(),
+          "kategori": item.kategori,
+          "keterangan": item.keterangan,
+        };
+      }
+
+      await BarangService.createBarang(data);
+      
+      // Refresh strictly from server to verify actual persistence
+      await fetchItems(); 
       
       isLoading = false;
       notifyListeners();
@@ -81,10 +159,17 @@ class ItemProvider with ChangeNotifier {
         stok: newStok,
         image: item.image, 
         kategori: item.kategori,
+        keterangan: item.keterangan,
       );
       notifyListeners();
 
-      await BarangService.updateBarang(id, _items[index].toJson());
+      // Ensure we send 'gambar' so it doesn't get set to NULL in DB
+      String? fileName = item.image.isNotEmpty ? item.image.split('/').last : null;
+      await BarangService.updateBarang(id, {
+        ..._items[index].toJson(),
+        "gambar": fileName,
+        "image": fileName,
+      });
     } catch (e) {
        // Rollback if failed
       _items[index] = item;
@@ -119,10 +204,16 @@ class ItemProvider with ChangeNotifier {
         stok: newStok,
         image: item.image, 
         kategori: item.kategori,
+        keterangan: item.keterangan,
       );
       notifyListeners();
       
-      await BarangService.updateBarang(itemId, _items[index].toJson());
+      String? fileName = item.image.isNotEmpty ? item.image.split('/').last : null;
+      await BarangService.updateBarang(itemId, {
+        ..._items[index].toJson(),
+        "gambar": fileName,
+        "image": fileName,
+      });
     } catch (e) {
         // Rollback
        _items[index] = item;
@@ -131,17 +222,60 @@ class ItemProvider with ChangeNotifier {
     }
   }
 
-  Future<void> ubahItem(Item item) async {
+  Future<void> ubahItem(Item item, {XFile? imageFile}) async {
      try {
        isLoading = true;
        notifyListeners();
        
-       await BarangService.updateBarang(item.id, item.toJson());
+       dynamic data;
+       bool isMultipart = false;
+
+       if (imageFile != null) {
+         isMultipart = true;
+         
+         String fileName = imageFile.name;
+         String ext = fileName.split('.').last.toLowerCase();
+         if (ext == 'jpg') ext = 'jpeg';
+
+         MultipartFile multipartFile;
+         if (kIsWeb) {
+              multipartFile = MultipartFile.fromBytes(
+                await imageFile.readAsBytes(),
+                filename: fileName,
+                contentType: MediaType('image', ext),
+              );
+         } else {
+              multipartFile = await MultipartFile.fromFile(
+                imageFile.path, 
+                filename: fileName,
+                contentType: MediaType('image', ext),
+              );
+         }
+
+          data = FormData.fromMap({
+            "nama_barang": item.nama,
+            "stok": item.stok.toString(),
+            "kategori": item.kategori,
+            "keterangan": item.keterangan,
+            "gambar": multipartFile,
+            "_method": "PUT",
+          });
+        } else {
+          data = {
+            "nama_barang": item.nama,
+            "stok": item.stok.toString(),
+            "kategori": item.kategori,
+            "keterangan": item.keterangan,
+          };
+        }
+
+       await BarangService.updateBarang(item.id, data, isMultipart: isMultipart);
        
-       final index = _items.indexWhere((i) => i.id == item.id);
-       if (index != -1) {
-         _items[index] = item;
-       }
+       PaintingBinding.instance.imageCache.clear();
+       PaintingBinding.instance.imageCache.clearLiveImages();
+       
+       // Refresh strictly from server
+       await fetchItems(); 
        
        isLoading = false;
        notifyListeners();

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'dart:ui_web' as ui;
+import 'dart:html' as html;
+import 'package:flutter/foundation.dart'; 
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../provider/item_provider.dart';
 import '../model/Model_data-barang.dart';
 
@@ -19,6 +24,27 @@ class _ManageBarangPageState extends State<ManageBarangPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ItemProvider>(context, listen: false).fetchItems();
     });
+  }
+
+  Widget _buildShimmerLoading() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      itemCount: 5,
+      itemBuilder: (_, __) => Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Shimmer.fromColors(
+          baseColor: Colors.white.withOpacity(0.05),
+          highlightColor: Colors.white.withOpacity(0.1),
+          child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -40,8 +66,8 @@ class _ManageBarangPageState extends State<ManageBarangPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: provider.isLoading
-          ? const Center(child: CircularProgressIndicator())
+      body: provider.isLoading && items.isEmpty
+          ? _buildShimmerLoading()
           : items.isEmpty
               ? const Center(
                   child: Text('NO ASSETS FOUND',
@@ -64,23 +90,43 @@ class _ManageBarangPageState extends State<ManageBarangPage> {
                         leading: b.image.isNotEmpty
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  b.image,
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
+                                child: kIsWeb 
+                                  ? SizedBox(
                                       width: 50,
                                       height: 50,
-                                      color: Colors.grey.shade800,
-                                      child: const Icon(
-                                        Icons.broken_image,
-                                        color: Colors.white54,
-                                      ),
-                                    );
-                                  },
-                                ),
+                                      child: Builder(
+                                          builder: (context) {
+                                            final String viewId = 'manage-img-${b.id}';
+                                            // ignore: undefined_prefixed_name
+                                            ui.platformViewRegistry.registerViewFactory(
+                                              viewId,
+                                              (int id) => html.ImageElement()
+                                                ..src = "${b.image}?v=${DateTime.now().millisecondsSinceEpoch}"
+                                                ..style.width = '100%'
+                                                ..style.height = '100%'
+                                                ..style.objectFit = 'cover',
+                                            );
+                                            return HtmlElementView(viewType: viewId);
+                                          },
+                                        ),
+                                    )
+                                  : Image.network(
+                                      "${b.image}?v=${DateTime.now().millisecondsSinceEpoch}",
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          width: 50,
+                                          height: 50,
+                                          color: Colors.grey.shade800,
+                                          child: const Icon(
+                                            Icons.broken_image,
+                                            color: Colors.white54,
+                                          ),
+                                        );
+                                      },
+                                    ),
                               )
                             : Container(
                                 width: 50,
@@ -140,92 +186,223 @@ class _ManageBarangPageState extends State<ManageBarangPage> {
         TextEditingController(text: item?.stok.toString() ?? '');
     final kategoriController =
         TextEditingController(text: item?.kategori ?? '');
-    final imageController = TextEditingController(text: item?.image ?? '');
-    final keteranganController = TextEditingController(text: item?.keterangan ?? '');
+    final keteranganController =
+        TextEditingController(text: item?.keterangan ?? '');
+    
+    XFile? selectedImage;
+    final ImagePicker picker = ImagePicker();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
-        padding: EdgeInsets.fromLTRB(
-            24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item == null ? 'ADD ASSET' : 'EDIT ASSET',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 24),
-              _modernField(namaController, 'Asset Name'),
-              const SizedBox(height: 16),
-              Row(
+      builder: (_) => StatefulBuilder(
+        builder: (context, setStateBottomSheet) {
+          
+          Future<void> pickImage() async {
+            final XFile? returnedImage =
+                await picker.pickImage(source: ImageSource.gallery);
+            if (returnedImage != null) {
+              setStateBottomSheet(() {
+                selectedImage = returnedImage;
+              });
+            }
+          }
+
+          return Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            padding: EdgeInsets.fromLTRB(
+                24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                      child: _modernField(stokController, 'Stock Count',
-                          isNumber: true)),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: _modernField(kategoriController, 'Category')),
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        item == null ? 'ADD ASSET' : 'EDIT ASSET',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                         icon: const Icon(Icons.close, color: Colors.white54)
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  GestureDetector(
+                    onTap: pickImage,
+                    child: Container(
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.1),
+                            style: BorderStyle.solid),
+                      ),
+                      child: selectedImage != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: kIsWeb
+                                ? Image.network(
+                                    selectedImage!.path,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                  )
+                                : const Center(child: Text("Mobile Preview Not Supported without dart:io", style: TextStyle(color: Colors.white))),
+                            )
+                          : (item != null && item.image.isNotEmpty)
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: kIsWeb
+                                    ? Builder(
+                                        builder: (context) {
+                                          final String viewId = 'preview-img-${item.id}';
+                                          // ignore: undefined_prefixed_name
+                                          ui.platformViewRegistry.registerViewFactory(
+                                            viewId,
+                                            (int id) => html.ImageElement()
+                                              ..src = "${item.image}?v=${DateTime.now().millisecondsSinceEpoch}"
+                                              ..style.width = '100%'
+                                              ..style.height = '100%'
+                                              ..style.objectFit = 'cover',
+                                          );
+                                          return HtmlElementView(viewType: viewId);
+                                        },
+                                      )
+                                    : Image.network(
+                                        "${item.image}?v=${DateTime.now().millisecondsSinceEpoch}",
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        errorBuilder: (_, __, ___) => const Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.broken_image,
+                                                color: Colors.white54, size: 40),
+                                            SizedBox(height: 8),
+                                            Text("Image Load Failed",
+                                                style:
+                                                    TextStyle(color: Colors.white54)),
+                                          ],
+                                        ),
+                                      ),
+                                )
+                              : const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_photo_alternate_rounded,
+                                        color: Colors.blueAccent, size: 40),
+                                    SizedBox(height: 8),
+                                    Text("Tap to upload image",
+                                        style: TextStyle(color: Colors.blueAccent)),
+                                  ],
+                                ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  _modernField(namaController, 'Asset Name'),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                          child: _modernField(stokController, 'Stock Count',
+                              isNumber: true)),
+                      const SizedBox(width: 16),
+                      Expanded(
+                          child: _modernField(kategoriController, 'Category')),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _modernField(keteranganController, 'Description', maxLines: 3),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3B82F6),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        elevation: 10,
+                        shadowColor: const Color(0xFF3B82F6).withOpacity(0.5),
+                      ),
+                      onPressed: () async {
+                        // Simple validation
+                        if (namaController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Name is required')),
+                          );
+                          return;
+                        }
+
+                        try {
+                          if (item == null) {
+                            await provider.tambahItem(
+                              Item(
+                                id: "0",
+                                nama: namaController.text,
+                                stok: int.tryParse(stokController.text) ?? 0,
+                                kategori: kategoriController.text,
+                                image: "", 
+                                keterangan: keteranganController.text,
+                              ),
+                              imageFile: selectedImage
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Item added successfully!'), backgroundColor: Colors.green),
+                              );
+                            }
+                          } else {
+                            await provider.ubahItem(
+                              Item(
+                                id: item.id,
+                                nama: namaController.text,
+                                stok: int.tryParse(stokController.text) ?? 0,
+                                kategori: kategoriController.text,
+                                image: item.image, 
+                                keterangan: keteranganController.text,
+                              ),
+                              imageFile: selectedImage
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Item updated successfully!'), backgroundColor: Colors.green),
+                              );
+                            }
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('CONFIRM CHANGES',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900, color: Colors.white)),
+                    ),
+                  )
                 ],
               ),
-              const SizedBox(height: 16),
-              _modernField(imageController, 'Image URL (optional)'),
-              const SizedBox(height: 16),
-              _modernField(keteranganController, 'Description', maxLines: 3),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    elevation: 10,
-                    shadowColor: const Color(0xFF3B82F6).withOpacity(0.5),
-                  ),
-                  onPressed: () async {
-                    if (item == null) {
-                      await provider.tambahItem(Item(
-                        id: "0",
-                        nama: namaController.text,
-                        stok: int.tryParse(stokController.text) ?? 0,
-                        kategori: kategoriController.text,
-                        image: imageController.text,
-                        keterangan: keteranganController.text,
-                      ));
-                    } else {
-                      await provider.ubahItem(Item(
-                        id: item.id,
-                        nama: namaController.text,
-                        stok: int.tryParse(stokController.text) ?? 0,
-                        kategori: kategoriController.text,
-                        image: imageController.text,
-                        keterangan: keteranganController.text,
-                      ));
-                    }
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  child: const Text('CONFIRM CHANGES',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900, color: Colors.white)),
-                ),
-              )
-            ],
-          ),
-        ),
+            ),
+          );
+        }
       ),
     );
   }

@@ -1,7 +1,10 @@
 import 'dart:ui';
 import 'package:aplikasi_project_uas/provider/peminjaman_provider.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui_web' as ui;
+import 'dart:html' as html;
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'package:aplikasi_project_uas/provider/item_provider.dart';
 import 'package:aplikasi_project_uas/model/Model_data-barang.dart';
@@ -72,6 +75,29 @@ class _DataBarangState extends State<DataBarang> {
     );
   }
 
+  Widget _buildShimmerLoading() {
+    return GridView.builder(
+      padding: EdgeInsets.all(16),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 220,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.62,
+      ),
+      itemCount: 6,
+      itemBuilder: (_, __) => Shimmer.fromColors(
+        baseColor: Colors.white.withOpacity(0.05),
+        highlightColor: Colors.white.withOpacity(0.1),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ItemProvider>();
@@ -79,14 +105,14 @@ class _DataBarangState extends State<DataBarang> {
 
     _syncJumlahPinjam(items.length);
 
-    if (provider.isLoading) {
+    if (provider.isLoading && items.isEmpty) {
       return Scaffold(
         backgroundColor: Color(0xFF030712),
-        body: Center(child: CircularProgressIndicator()),
+        body: _buildShimmerLoading(),
       );
     }
 
-    if (provider.error != null) {
+    if (provider.error != null && items.isEmpty) {
       return Scaffold(
         backgroundColor: Color(0xFF030712),
         body: Center(
@@ -110,10 +136,8 @@ class _DataBarangState extends State<DataBarang> {
             child: _buildGlowSpot(300, Color(0xFF8B5CF6).withOpacity(0.15)),
           ),
 
-          /// ================= CONTENT =================
           Column(
             children: [
-              /// APPBAR
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Row(
@@ -156,29 +180,19 @@ class _DataBarangState extends State<DataBarang> {
                             children: [
                               Expanded(
                                 child: item.image.isNotEmpty
-                                  ? Image.network(
-                                      item.image, 
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Container(
-                                          color: Colors.grey.shade800,
-                                          child: const Icon(
-                                            Icons.broken_image,
-                                            color: Colors.white54,
-                                            size: 40,
-                                          ),
+                                  ? Builder(
+                                      builder: (context) {
+                                        final String viewId = 'img-${item.id}';
+                                        // ignore: undefined_prefixed_name
+                                        ui.platformViewRegistry.registerViewFactory(
+                                          viewId,
+                                          (int id) => html.ImageElement()
+                                            ..src = "${item.image}?v=${DateTime.now().millisecondsSinceEpoch}"
+                                            ..style.width = '100%'
+                                            ..style.height = '100%'
+                                            ..style.objectFit = 'cover',
                                         );
-                                      },
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return Center(
-                                          child: CircularProgressIndicator(
-                                            value: loadingProgress.expectedTotalBytes != null
-                                                ? loadingProgress.cumulativeBytesLoaded /
-                                                    loadingProgress.expectedTotalBytes!
-                                                : null,
-                                          ),
-                                        );
+                                        return HtmlElementView(viewType: viewId);
                                       },
                                     )
                                   : Container(
@@ -327,11 +341,14 @@ class _DataBarangState extends State<DataBarang> {
 
     if (ok == true) {
       try {
-        // 🔥 OPTIMIZED: Single call with quantity
-        await provider.kurangiStok(item.id, jumlah: jumlah);
+        // REMOVED: provider.kurangiStok(item.id, jumlah: jumlah); 
+        // Backend now handles stock decrement automatically on Laravel side.
 
         await Provider.of<PeminjamanProvider>(context, listen: false)
             .tambahPeminjaman(item, jumlah);
+
+        // Refresh items to get updated stock from server
+        await provider.fetchItems();
 
         setState(() {
           jumlahPinjam[index] = 0;
