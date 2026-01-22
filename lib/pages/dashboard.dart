@@ -7,6 +7,7 @@ import 'data_peminjaman.dart';
 import 'manage_barang.dart';
 
 import 'package:provider/provider.dart';
+import '../provider/auth_provider.dart';
 import '../provider/item_provider.dart';
 import '../provider/peminjaman_provider.dart';
 import '../model/Model_data-barang.dart';
@@ -46,9 +47,9 @@ class _DashboardState extends State<Dashboard> {
         email: widget.email ?? 'user@example.com',
         isAdmin: widget.isAdmin,
       ),
-      ManageBarangPage(isAdmin: widget.isAdmin),
+      if (widget.isAdmin) ManageBarangPage(isAdmin: widget.isAdmin),
       DataBarang(isAdmin: widget.isAdmin),
-      const HistoryPage(), 
+      HistoryPage(isAdmin: widget.isAdmin), 
     ];
 
     return Scaffold(
@@ -73,7 +74,10 @@ class _DashboardState extends State<Dashboard> {
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
-                  child: pages[_selectedIndex],
+                  child: Container(
+                    key: ValueKey<int>(_selectedIndex),
+                    child: pages[_selectedIndex],
+                  ),
                 ),
               ),
             ],
@@ -116,11 +120,11 @@ class _DashboardState extends State<Dashboard> {
               border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
             child: BottomNavigationBar(
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Home'),
-                BottomNavigationBarItem(icon: Icon(Icons.rocket_launch_rounded), label: 'Manage'),
-                BottomNavigationBarItem(icon: Icon(Icons.inventory_2_rounded), label: 'Barang'),
-                BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Peminjaman'),
+              items: [
+                const BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Home'),
+                if (widget.isAdmin) const BottomNavigationBarItem(icon: Icon(Icons.rocket_launch_rounded), label: 'Manage'),
+                const BottomNavigationBarItem(icon: Icon(Icons.inventory_2_rounded), label: 'Barang'),
+                const BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Peminjaman'),
               ],
               currentIndex: _selectedIndex,
               selectedItemColor: const Color(0xFF60A5FA),
@@ -412,12 +416,15 @@ class HomePage extends StatelessWidget {
                                       ),
                                       icon: const Icon(Icons.logout),
                                       label: const Text('LOGOUT SYSTEM'),
-                                      onPressed: () {
-                                        Navigator.pop(ctx); 
-                                        Navigator.pushReplacement(
-                                          context, 
-                                          MaterialPageRoute(builder: (context) => const LoginPage()),
-                                        );
+                                      onPressed: () async {
+                                        await Provider.of<AuthProvider>(context, listen: false).logout();
+                                        if (context.mounted) {
+                                          Navigator.pop(ctx); 
+                                          Navigator.pushReplacement(
+                                            context, 
+                                            MaterialPageRoute(builder: (context) => const LoginPage()),
+                                          );
+                                        }
                                       },
                                     ),
                                   ),

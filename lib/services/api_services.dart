@@ -12,7 +12,7 @@ class ApiService {
   // Use localhost for web to avoid network complexity
   
   // CHANGE YOUR IP HERE IF USING PHYSICAL DEVICE
-  static const String serverIp = '10.14.180.142'; 
+  static const String serverIp = '172.20.10.2'; 
   static const String baseServerUrl = 'http://$serverIp:8000';
   final String baseUrl = '$baseServerUrl/api/'; 
 
@@ -23,8 +23,8 @@ class ApiService {
   ApiService._internal() {
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
     ));
 
     // Interceptor to add Bearer token
@@ -75,15 +75,28 @@ class ApiService {
 
   static void _handleDioError(DioException e) {
     String message = "Connection error";
-    if (e.response?.data != null && e.response?.data is Map) {
-      final data = e.response?.data as Map;
-      message = data['message'] ?? data['error'] ?? e.message;
-      if (data['errors'] != null) {
-        // Handle Laravel validation errors
-        message += ": " + data['errors'].toString();
+    
+    if (e.type == DioExceptionType.connectionTimeout) {
+      message = "Connection timeout. Please check your server or network.";
+    } else if (e.type == DioExceptionType.receiveTimeout) {
+      message = "Server is taking too long to respond.";
+    } else if (e.response != null) {
+      final statusCode = e.response?.statusCode;
+      final responseData = e.response?.data;
+      
+      if (responseData is Map) {
+        message = responseData['message'] ?? responseData['error'] ?? "Error $statusCode";
+        if (responseData['errors'] != null) {
+          message += ": " + responseData['errors'].toString();
+        }
+      } else {
+        message = "Server error ($statusCode)";
       }
+    } else {
+      message = "Network error: ${e.message}";
     }
-    debugPrint('DIO ERROR: $message');
+    
+    debugPrint('DIO ERROR [${e.type}]: $message');
     throw Exception(message);
   }
 

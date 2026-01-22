@@ -6,7 +6,8 @@ import '../provider/peminjaman_provider.dart';
 import '../provider/item_provider.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  final bool isAdmin;
+  const HistoryPage({super.key, this.isAdmin = false});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -242,7 +243,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                         ],
                                       ),
 
-                                      if (!data.sudahDikembalikan) ...[
+                                      if (widget.isAdmin && !data.sudahDikembalikan) ...[
                                         const SizedBox(height: 12),
                                         SizedBox(
                                           width: double.infinity,

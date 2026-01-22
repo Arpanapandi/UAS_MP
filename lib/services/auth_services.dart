@@ -24,7 +24,6 @@ class AuthService {
       "name": username, 
       "email": email,
       "password": password,
-      "password_confirmation": password, 
     });
     if (response is Map<String, dynamic> && response.containsKey('data')) {
       return response['data'];

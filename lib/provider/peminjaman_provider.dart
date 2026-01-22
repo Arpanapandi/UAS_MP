@@ -34,7 +34,7 @@ class PeminjamanProvider with ChangeNotifier {
     try {
         final newPeminjamanData = {
             "barang_id": item.id,
-            "jumlah": jumlah,
+            "jml_peminjaman": jumlah,
             "tanggal_pinjam": DateTime.now().toIso8601String().split('T')[0], // YYYY-MM-DD
             "status": "dipinjam"
         };

@@ -63,12 +63,22 @@ class _LoginPageState extends State<LoginPage> {
         );
         
         // Use username from auth provider or controller
-        String username = auth.currentUser?['username'] ?? (isLogin ? _emailController.text : _usernameController.text);
+        String username = auth.currentUser?['username'] ?? (_isEmail(_emailController.text) ? _usernameController.text : _emailController.text);
+        if (username.isEmpty && !isLogin) username = _usernameController.text;
+        if (username.isEmpty) username = _emailController.text;
+
+        // Detect admin role from username or user data
+        bool isAdmin = username.toLowerCase().contains('admin') || 
+                       (auth.currentUser?['role']?.toString().toLowerCase() == 'admin');
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => Dashboard(username: username),
+            builder: (context) => Dashboard(
+              username: username,
+              isAdmin: isAdmin,
+              email: auth.currentUser?['email'] ?? _emailController.text,
+            ),
           ),
         );
       } else {
@@ -318,6 +328,9 @@ class _LoginPageState extends State<LoginPage> {
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter your email';
                                     }
+                                    if (!isLogin && !_isEmail(value)) {
+                                      return 'Please enter a valid email address';
+                                    }
                                     return null;
                                   },
                                 ),
@@ -342,6 +355,9 @@ class _LoginPageState extends State<LoginPage> {
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter your password';
+                                    }
+                                    if (!isLogin && value.length < 8) {
+                                      return 'Password must be at least 8 characters';
                                     }
                                     return null;
                                   },

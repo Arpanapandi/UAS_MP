@@ -65,8 +65,18 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-       await AuthService.register(username, email, password);
-       // Auto login logic could be here
+       final response = await AuthService.register(username, email, password);
+       
+       // Handle Direct Login after registration
+       _token = response['token'] ?? response['access_token']; 
+       _currentUser = response['user'] ?? {'username': username, 'email': email};
+       
+       if (_token != null) {
+         final prefs = await SharedPreferences.getInstance();
+         await _storage.write(key: 'auth_token', value: _token);
+         await prefs.setString('username', username);
+       }
+
       _isLoading = false;
       notifyListeners();
       return true;

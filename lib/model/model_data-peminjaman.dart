@@ -32,7 +32,9 @@ class Peminjaman {
       id: json['id'].toString(),
       itemId: json['barang_id']?.toString() ?? json['itemId']?.toString() ?? '',
       namaBarang: name,
-      jumlah: int.tryParse(json['jumlah'].toString()) ?? int.tryParse(json['qty'].toString()) ?? 0,
+      jumlah: int.tryParse(json['jml_peminjaman'].toString()) ?? 
+              int.tryParse(json['jumlah'].toString()) ?? 
+              int.tryParse(json['qty'].toString()) ?? 0,
       tanggal: DateTime.tryParse(json['tanggal_pinjam'] ?? json['tanggal'] ?? json['created_at'] ?? '') ?? DateTime.now(),
       sudahDikembalikan: json['status'] == 'dikembalikan' || json['sudahDikembalikan'] == true,
     );
