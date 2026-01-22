@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Peminjaman;
 use App\Models\Barang;
 use Illuminate\Http\Request;
+use App\Http\Resources\PeminjamanResource;
 
 /**
  * @OA\Tag(
@@ -35,6 +36,7 @@ class PeminjamanController extends Controller
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="user_id", type="integer", example=2),
      *                     @OA\Property(property="barang_id", type="integer", example=1),
+     *                     @OA\Property(property="jml_peminjaman", type="integer", example=2),
      *                     @OA\Property(property="tanggal_pinjam", type="string", format="date", example="2024-01-15"),
      *                     @OA\Property(property="status", type="string", example="dipinjam", enum={"dipinjam", "dikembalikan"}),
      *                     @OA\Property(property="user", type="object", description="Data user peminjam"),
@@ -62,7 +64,7 @@ class PeminjamanController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Data peminjaman berhasil diambil.',
-            'data' => $peminjaman,
+            'data' => PeminjamanResource::collection($peminjaman),
         ]);
     }
 
@@ -76,8 +78,9 @@ class PeminjamanController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"barang_id","tanggal_pinjam","status"},
+     *             required={"barang_id","jml_peminjaman","tanggal_pinjam","status"},
      *             @OA\Property(property="barang_id", type="integer", example=1, description="ID barang yang dipinjam"),
+     *             @OA\Property(property="jml_peminjaman", type="integer", example=2, description="Jumlah barang yang dipinjam"),
      *             @OA\Property(property="tanggal_pinjam", type="string", format="date", example="2024-01-15", description="Tanggal pinjam (format: YYYY-MM-DD)"),
      *             @OA\Property(property="status", type="string", example="dipinjam", enum={"dipinjam", "dikembalikan"}, description="Status peminjaman")
      *         )
@@ -100,6 +103,7 @@ class PeminjamanController extends Controller
     {
         $request->validate([
             'barang_id' => 'required|exists:barang,id',
+            'jml_peminjaman' => 'required|integer|min:1',
             'tanggal_pinjam' => 'required|date',
             'status' => 'required|in:dipinjam,dikembalikan',
         ]);
@@ -114,20 +118,21 @@ class PeminjamanController extends Controller
                 ], 404);
             }
 
-            if ($barang->stok <= 0) {
+            if ($barang->stok < $request->jml_peminjaman) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Stok barang tidak tersedia.',
+                    'message' => 'Stok barang tidak mencukupi. Stok tersedia: ' . $barang->stok,
                 ], 400);
             }
 
             // Kurangi stok
-            $barang->decrement('stok');
+            $barang->decrement('stok', $request->jml_peminjaman);
         }
 
         $peminjaman = Peminjaman::create([
             'user_id' => $request->user()->id,
             'barang_id' => $request->barang_id,
+            'jml_peminjaman' => $request->jml_peminjaman,
             'tanggal_pinjam' => $request->tanggal_pinjam,
             'status' => $request->status,
         ]);
@@ -137,7 +142,7 @@ class PeminjamanController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Peminjaman berhasil ditambahkan.',
-            'data' => $peminjaman,
+            'data' => new PeminjamanResource($peminjaman),
         ], 201);
     }
 
@@ -191,7 +196,7 @@ class PeminjamanController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Data peminjaman berhasil diambil.',
-            'data' => $peminjaman,
+            'data' => new PeminjamanResource($peminjaman),
         ]);
     }
 
@@ -213,6 +218,7 @@ class PeminjamanController extends Controller
      *         required=false,
      *         @OA\JsonContent(
      *             @OA\Property(property="barang_id", type="integer", example=1, description="ID barang (opsional)"),
+     *             @OA\Property(property="jml_peminjaman", type="integer", example=2, description="Jumlah barang (opsional)"),
      *             @OA\Property(property="tanggal_pinjam", type="string", format="date", example="2024-01-15", description="Tanggal pinjam (opsional)"),
      *             @OA\Property(property="status", type="string", example="dikembalikan", enum={"dipinjam", "dikembalikan"}, description="Status peminjaman (opsional)")
      *         )
@@ -253,6 +259,7 @@ class PeminjamanController extends Controller
 
         $request->validate([
             'barang_id' => 'sometimes|exists:barang,id',
+            'jml_peminjaman' => 'sometimes|integer|min:1',
             'tanggal_pinjam' => 'sometimes|date',
             'status' => 'sometimes|in:dipinjam,dikembalikan',
         ]);
@@ -266,20 +273,45 @@ class PeminjamanController extends Controller
                 // Kembalikan stok
                 $barang = Barang::find($peminjaman->barang_id);
                 if ($barang) {
-                    $barang->increment('stok');
+                    $barang->increment('stok', $peminjaman->jml_peminjaman);
                 }
             } elseif ($oldStatus === 'dikembalikan' && $newStatus === 'dipinjam') {
                 // Kurangi stok
                 $barangId = $request->barang_id ?? $peminjaman->barang_id;
+                $jmlPeminjaman = $request->jml_peminjaman ?? $peminjaman->jml_peminjaman;
                 $barang = Barang::find($barangId);
-                if ($barang && $barang->stok <= 0) {
+                
+                if ($barang && $barang->stok < $jmlPeminjaman) {
                     return response()->json([
                         'status' => false,
-                        'message' => 'Stok barang tidak tersedia.',
+                        'message' => 'Stok barang tidak mencukupi.',
                     ], 400);
                 }
+                
                 if ($barang) {
-                    $barang->decrement('stok');
+                    $barang->decrement('stok', $jmlPeminjaman);
+                }
+            } elseif ($oldStatus === 'dipinjam' && $newStatus === 'dipinjam' && $request->has('jml_peminjaman')) {
+                // Jika masih dalam status dipinjam tapi jumlahnya diubah
+                $newJml = $request->jml_peminjaman;
+                $oldJml = $peminjaman->jml_peminjaman;
+                $selisih = $newJml - $oldJml;
+
+                $barang = Barang::find($peminjaman->barang_id);
+                if ($barang) {
+                    if ($selisih > 0) {
+                        // Jumlah pinjam bertambah, kurangi stok
+                        if ($barang->stok < $selisih) {
+                            return response()->json([
+                                'status' => false,
+                                'message' => 'Stok barang tidak mencukupi untuk penambahan jumlah.',
+                            ], 400);
+                        }
+                        $barang->decrement('stok', $selisih);
+                    } elseif ($selisih < 0) {
+                        // Jumlah pinjam berkurang, kembalikan stok
+                        $barang->increment('stok', abs($selisih));
+                    }
                 }
             }
         }
@@ -290,7 +322,7 @@ class PeminjamanController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Peminjaman berhasil diupdate.',
-            'data' => $peminjaman,
+            'data' => new PeminjamanResource($peminjaman),
         ]);
     }
 
@@ -344,7 +376,7 @@ class PeminjamanController extends Controller
         if ($peminjaman->status === 'dipinjam') {
             $barang = Barang::find($peminjaman->barang_id);
             if ($barang) {
-                $barang->increment('stok');
+                $barang->increment('stok', $peminjaman->jml_peminjaman);
             }
         }
 

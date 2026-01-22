@@ -43,21 +43,23 @@ class WebPeminjamanController extends Controller
     {
         $request->validate([
             'barang_id' => 'required|exists:barang,id',
+            'jml_peminjaman' => 'required|integer|min:1',
             'tanggal_pinjam' => 'required|date',
             'status' => 'required|in:dipinjam,dikembalikan',
         ]);
 
         if ($request->status === 'dipinjam') {
             $barang = Barang::findOrFail($request->barang_id);
-            if ($barang->stok <= 0) {
-                return back()->withErrors(['barang_id' => 'Stok barang tidak tersedia.'])->withInput();
+            if ($barang->stok < $request->jml_peminjaman) {
+                return back()->withErrors(['barang_id' => 'Stok barang tidak cukup. Tersedia: ' . $barang->stok])->withInput();
             }
-            $barang->decrement('stok');
+            $barang->decrement('stok', $request->jml_peminjaman);
         }
 
         Peminjaman::create([
             'user_id' => auth()->id(),
             'barang_id' => $request->barang_id,
+            'jml_peminjaman' => $request->jml_peminjaman,
             'tanggal_pinjam' => $request->tanggal_pinjam,
             'status' => $request->status,
         ]);
@@ -96,6 +98,7 @@ class WebPeminjamanController extends Controller
 
         $request->validate([
             'barang_id' => 'sometimes|exists:barang,id',
+            'jml_peminjaman' => 'sometimes|integer|min:1',
             'tanggal_pinjam' => 'sometimes|date',
             'status' => 'sometimes|in:dipinjam,dikembalikan',
         ]);
@@ -108,16 +111,33 @@ class WebPeminjamanController extends Controller
             if ($oldStatus === 'dipinjam' && $newStatus === 'dikembalikan') {
                 $barang = Barang::find($peminjaman->barang_id);
                 if ($barang) {
-                    $barang->increment('stok');
+                    $barang->increment('stok', $peminjaman->jml_peminjaman);
                 }
             } elseif ($oldStatus === 'dikembalikan' && $newStatus === 'dipinjam') {
                 $barangId = $request->barang_id ?? $peminjaman->barang_id;
+                $jmlPeminjaman = $request->jml_peminjaman ?? $peminjaman->jml_peminjaman;
                 $barang = Barang::find($barangId);
-                if ($barang && $barang->stok <= 0) {
-                    return back()->withErrors(['barang_id' => 'Stok barang tidak tersedia.'])->withInput();
+                if ($barang && $barang->stok < $jmlPeminjaman) {
+                    return back()->withErrors(['barang_id' => 'Stok barang tidak cukup.'])->withInput();
                 }
                 if ($barang) {
-                    $barang->decrement('stok');
+                    $barang->decrement('stok', $jmlPeminjaman);
+                }
+            } elseif ($oldStatus === 'dipinjam' && $newStatus === 'dipinjam' && $request->has('jml_peminjaman')) {
+                $newJml = $request->jml_peminjaman;
+                $oldJml = $peminjaman->jml_peminjaman;
+                $selisih = $newJml - $oldJml;
+
+                $barang = Barang::find($peminjaman->barang_id);
+                if ($barang) {
+                    if ($selisih > 0) {
+                        if ($barang->stok < $selisih) {
+                            return back()->withErrors(['jml_peminjaman' => 'Stok tidak cukup untuk penambahan jumlah.'])->withInput();
+                        }
+                        $barang->decrement('stok', $selisih);
+                    } elseif ($selisih < 0) {
+                        $barang->increment('stok', abs($selisih));
+                    }
                 }
             }
         }
@@ -143,7 +163,7 @@ class WebPeminjamanController extends Controller
         if ($peminjaman->status === 'dipinjam') {
             $barang = Barang::find($peminjaman->barang_id);
             if ($barang) {
-                $barang->increment('stok');
+                $barang->increment('stok', $peminjaman->jml_peminjaman);
             }
         }
 

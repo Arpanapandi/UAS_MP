@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use Illuminate\Http\Request;
+use App\Http\Resources\BarangResource;
 
 /**
  * @OA\Tag(
@@ -52,7 +53,7 @@ class BarangController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Data barang berhasil diambil.',
-            'data' => $barang,
+            'data' => BarangResource::collection($barang),
         ]);
     }
 
@@ -107,7 +108,7 @@ class BarangController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Barang berhasil ditambahkan.',
-            'data' => $barang,
+            'data' => new BarangResource($barang),
         ], 201);
     }
 
@@ -152,7 +153,7 @@ class BarangController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Data barang berhasil diambil.',
-            'data' => $barang,
+            'data' => new BarangResource($barang),
         ]);
     }
 
@@ -231,7 +232,7 @@ class BarangController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Barang berhasil diupdate.',
-            'data' => $barang,
+            'data' => new BarangResource($barang),
         ]);
     }
 

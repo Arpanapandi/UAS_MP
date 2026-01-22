@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+
 /**
  * @OA\Info(
  *     title="API Peminjaman Barang",
@@ -74,10 +77,23 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $request->validate([
+        Log::info('Login Request', [
+            'headers' => $request->header(),
+            'body' => $request->all()
+        ]);
+
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validasi gagal.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $user = User::where('email', $request->email)->first();
 
